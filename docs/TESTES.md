@@ -23,6 +23,9 @@ Use **experiência de teste separada da produção**, porque a Roblox recomenda 
 ## Lobby e quatro Places
 Ver `docs/MODOS_LOBBY.md`. Abrir os quatro arquivos compilados no Studio, conferir a saída e a interface mobile. Configurar PlaceIds reais em uma experiência de teste com quatro Places; testar no **cliente Roblox** entrada solo na Rua Livre, partidas de 2 a 8 pessoas em servidores reservados, cancelamento, desconexão e falhas de teleporte. O Studio não executa teletransportes.
 
+## Retorno seguro ao lobby
+Validar em jogo publicado: botão de confirmação, PlaceId do Lobby, retorno da Rua Livre com save imediatamente anterior à saída, falha de DataStore impedindo o teleporte, falha de teleporte liberando a UI e abandono de partida competitiva sem transferir dinheiro. Conferir `docs/MODOS_LOBBY.md`.
+
 ## Competitivo
 Trocar `Mode` em Config para `ranked` e testar servidor com 2 a 8 clientes.
 1. Duas lojas vendendo queijo: um consumidor compra em apenas uma.
