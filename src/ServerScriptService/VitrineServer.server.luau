@@ -13,6 +13,7 @@ local Catalog = require(Shared:WaitForChild("Catalog"))
 local Economy = require(Shared:WaitForChild("Economy"))
 local Population = require(Shared:WaitForChild("Population"))
 local MarketEvents = require(Shared:WaitForChild("MarketEvents"))
+local ShopAnalytics = require(Shared:WaitForChild("ShopAnalytics"))
 local ProfileStore = require(script.Parent:WaitForChild("ProfileStore"))
 local Routes = require(ReplicatedStorage:WaitForChild("ModeRoutes"))
 local rng = Random.new()
@@ -217,6 +218,7 @@ local function makeMap()
                 id = id, x = x, z = z, side = side, model = model, door = door,
                 prompt = prompt, label = sign(anchor, "", Vector3.new(0, 4, 0)),
                 ownerId = nil, employeeId = nil, employeeModel = nil,
+                leaseVersion = 0, analytics = ShopAnalytics.New(),
                 stock = {}, shelf = {}, prices = {}, costValue = {}, displays = {},
                 missedBills = 0, reputation = 50,
             }
@@ -291,6 +293,8 @@ local function restock(lot, id)
 end
 
 local function resetLot(lot)
+    lot.leaseVersion += 1
+    lot.analytics = ShopAnalytics.New()
     if lot.employeeId then Population.Layoff(population, lot.employeeId) end
     if lot.employeeModel then lot.employeeModel:Destroy() end
     lot.ownerId, lot.employeeId, lot.employeeModel = nil, nil, nil
@@ -320,7 +324,8 @@ end
 local function shopSnapshot(lot)
     if not lot then return nil end
     local copy = { stock = {}, shelf = {}, prices = {}, costValue = {},
-        reputation = lot.reputation, hasEmployee = lot.employeeId ~= nil }
+        reputation = lot.reputation, hasEmployee = lot.employeeId ~= nil,
+        analytics = ShopAnalytics.Restore(lot.analytics, Catalog) }
     for _, product in ipairs(Catalog.List) do
         local id = product.id
         copy.stock[id] = lot.stock[id]
@@ -341,6 +346,7 @@ local function profileSnapshot(userId)
         expenses = math.floor(account.expenses),
         sales = account.sales,
         penalties = math.floor(account.penalties),
+        ledger = account.ledger,
         shop = shopSnapshot(lot) or savedShops[userId],
     }
 end
@@ -355,8 +361,10 @@ local function rent(player, lot)
         if account.cash < Config.LeaseCost then message(player, "Saldo insuficiente para alugar."); return end
         account.cash -= Config.LeaseCost
         account.expenses += Config.LeaseCost
+        account.ledger.lease += Config.LeaseCost
     end
     account.everRented = true
+    lot.leaseVersion += 1
     lot.ownerId = player.UserId
     if restored then
         for _, p in ipairs(Catalog.List) do
@@ -365,6 +373,7 @@ local function rent(player, lot)
             lot.prices[id], lot.costValue[id] = restored.prices[id] or p.retail, restored.costValue[id] or 0
         end
         lot.reputation = restored.reputation or 50
+        lot.analytics = ShopAnalytics.Restore(restored.analytics, Catalog)
         if restored.hasEmployee then
             local id = Population.Hire(population, lot.id)
             if id then
@@ -408,7 +417,11 @@ local function sendState(player)
             table.insert(pending, { product = bid.productId, qty = bid.qty, premium = bid.premium, escrow = bid.escrow })
         end
     end
+    local stored = savedShops[player.UserId]
+    local metrics = lot and lot.analytics or (stored and stored.analytics)
     stateEvent:FireClient(player, {
+        analytics = ShopAnalytics.View(metrics or ShopAnalytics.New(), Catalog),
+        ledger = account.ledger,
         mode = Config.Mode, cash = account.cash, sales = account.sales,
         lobbyConfigured = Routes.lobby ~= nil and typeof(Routes.lobby.placeId) == "number" and Routes.lobby.placeId > 0,
         returning = returning[player.UserId] == true,
@@ -426,8 +439,8 @@ local function pushState()
     for _, player in ipairs(Players:GetPlayers()) do sendState(player) end
 end
 
-local function sale(lot, product, expectedPrice, expectedOwner, person)
-    if not lot.ownerId or lot.ownerId ~= expectedOwner then return false end
+local function sale(lot, product, expectedPrice, expectedOwner, expectedLease, person)
+    if not lot.ownerId or lot.ownerId ~= expectedOwner or lot.leaseVersion ~= expectedLease then return false end
     local account = accounts[lot.ownerId]
     if not account or not product or account.eliminated or account.persistence == "conflict" or returning[lot.ownerId] then return false end
     local price = lot.prices[product.id]
@@ -439,6 +452,8 @@ local function sale(lot, product, expectedPrice, expectedOwner, person)
     account.cash += price
     account.revenue += price
     account.expenses += historicalCost
+    account.ledger.cogs += historicalCost
+    ShopAnalytics.RecordSale(lot.analytics, product, price, historicalCost)
     account.sales += 1
     completedSales += 1
     lot.reputation = math.min(100, lot.reputation + 0.15)
@@ -463,6 +478,7 @@ local function generateCustomer()
     if not offer then offer = { store = open[rng:NextInteger(1, #open)], product = nil, price = 0 } end
     local target = offer.store
     local owner = target.ownerId
+    local lease = target.leaseVersion
     local sidewalk = target.side * 17
     local npc = npcModel((CATEGORY[need.category] or need.category) .. " | " .. person.profession, arrivalX, sidewalk, false)
     activeCustomers += 1
@@ -473,8 +489,19 @@ local function generateCustomer()
             moveNpc(npc, target.x, sidewalk, math.max(0.35, math.abs(target.x - arrivalX) / 16))
             moveNpc(npc, target.x, target.z - target.side * 8, 1.2)
             task.wait(0.35)
-            if round == startedRound and offer.product then
-                bought = sale(target, offer.product, offer.price, owner, person)
+            local validVisit = round == startedRound and target.ownerId == owner
+                and target.leaseVersion == lease and owner ~= nil
+                and accounts[owner] ~= nil and not returning[owner]
+            if validVisit then
+                ShopAnalytics.BeginVisit(target.analytics, need.category)
+                if offer.product then
+                    bought = sale(target, offer.product, offer.price, owner, lease, person)
+                end
+                if not bought then
+                    local reason = ShopAnalytics.Reason(target, need, Catalog, offer.product, offer.price)
+                    ShopAnalytics.RecordLost(target.analytics, reason)
+                    target.reputation = math.max(10, target.reputation - 0.12)
+                end
             end
             if bought and offer.product then
                 local signGui = npc.PrimaryPart:FindFirstChild("Letreiro")
@@ -484,9 +511,6 @@ local function generateCustomer()
                 local bag = part(npc, "Sacola de compras", Vector3.new(1.05, 1.2, 0.75),
                     pos + Vector3.new(1.4, -0.6, 0), Color3.fromRGB(235, 201, 133))
                 bag.CanCollide = false
-            end
-            if not bought and round == startedRound and target.ownerId == owner then
-                target.reputation = math.max(10, target.reputation - 0.12)
             end
             moveNpc(npc, target.x, sidewalk, 1.1)
         end)
@@ -558,6 +582,8 @@ local function payBills()
                 if account.cash >= bill then
                     account.cash -= bill
                     account.expenses += bill
+                    account.ledger.rent += Config.DailyRent
+                    account.ledger.wages += wages
                     if wages > 0 then Population.PayWorker(population, lot.employeeId, wages) end
                     lot.missedBills = 0
                 else
@@ -566,7 +592,10 @@ local function payBills()
                     if lot.missedBills >= 2 then
                         local userId = lot.ownerId
                         refundBids(userId)
-                        for _, cost in pairs(lot.costValue) do account.expenses += cost end
+                        for _, cost in pairs(lot.costValue) do
+                            account.expenses += cost
+                            account.ledger.writeoff += cost
+                        end
                         resetLot(lot)
                         savedShops[userId] = nil
                         if Config.Mode == "price_war" then
@@ -619,6 +648,7 @@ local function endRound(reason)
     for _, account in pairs(accounts) do
         account.cash, account.reserved, account.penalties = Config.StartingCash, 0, 0
         account.revenue, account.expenses, account.sales = 0, 0, 0
+        account.ledger = { lease = 0, rent = 0, wages = 0, hire = 0, cogs = 0, writeoff = 0 }
         account.eliminated, account.everRented = false, false
     end
     for _, p in ipairs(Catalog.List) do supplier[p.id] = p.initialSupply end
@@ -715,6 +745,7 @@ local function handleAction(player, action, payload)
         if not id then message(player, "Nenhum trabalhador disponível."); return end
         account.cash -= Config.EmployeeHireCost
         account.expenses += Config.EmployeeHireCost
+        account.ledger.hire += Config.EmployeeHireCost
         lot.employeeId = id
         lot.employeeModel = npcModel("Repositor", lot.x - 10, lot.z, true)
         message(player, "Repositor contratado: ele recebe salário e consome na cidade.")
@@ -824,6 +855,7 @@ local function join(player)
         cash = profile.cash, reserved = 0, penalties = profile.penalties or 0,
         revenue = profile.revenue, expenses = profile.expenses, sales = profile.sales,
         eliminated = false, everRented = false, persistence = mode,
+        ledger = profile.ledger or { lease = 0, rent = 0, wages = 0, hire = 0, cogs = 0, writeoff = 0 },
     }
     if not competitive then
         savedShops[player.UserId] = profile.shop
