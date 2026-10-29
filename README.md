@@ -13,12 +13,18 @@ Simulador econômico original em **Roblox (Luau)**. Jogadores alugam pontos come
 O código fonte é sincronizável com [Rojo](https://rojo.space/). Após instalar Rojo e Roblox Studio:
 
 ```sh
-rojo build default.project.json -o VitrineCity.rbxlx
+rojo build lobby.project.json -o VitrineCity-Lobby.rbxlx
+rojo build default.project.json -o VitrineCity-RuaLivre.rbxlx
+rojo build ranked.project.json -o VitrineCity-GuerraComercial.rbxlx
+rojo build price_war.project.json -o VitrineCity-GuerraDePrecos.rbxlx
 ```
 
-Abra `VitrineCity.rbxlx` no Roblox Studio e pressione **Play**. O mapa é gerado por scripts.
+Abra cada arquivo `.rbxlx` no Roblox Studio para testar o mapa gerado por scripts. O GitHub Actions também cria os quatro arquivos em um único artefato.
 
-O GitHub Actions verifica a sintaxe Luau, valida a estrutura e disponibiliza o artefato `VitrineCity-place` compilado. Esses testes não substituem testes de execução no Studio.
+O GitHub Actions verifica a sintaxe Luau, valida a estrutura e disponibiliza o artefato `VitrineCity-Places` com os quatro lugares compilados. Esses testes não substituem testes de execução no Studio.
+
+### Lobby e partidas reservadas
+O lobby dispõe de três quiosques. Para publicar, configure os três PlaceIds em `src/ReplicatedStorage/ModeRoutes.luau` (**0 significa desabilitado**) e publique os quatro Places **na mesma experiência Roblox**. O Lobby deve ser a entrada principal. Os modos competitivos usam filas locais de 2 a 8 jogadores e partidas reservadas com `TeleportService`. Veja [o guia do lobby](docs/MODOS_LOBBY.md). Teleportes não funcionam no Studio.
 
 ### Persistência e segurança
 A Rua Livre salva caixa, vendas, despesas, preços e inventário em `DataStoreService`. O perfil só é aberto após uma leitura válida: falhas ou trava de outra sessão bloqueiam a entrada no comércio, sem inventar uma conta vazia. Atualizações usam `UpdateAsync` e reserva de sessão temporária. No Studio, o salvamento permanece desabilitado (`Config.StudioPersistence = false`) para proteger dados de produção. Leia `docs/PERSISTENCIA.md`.
