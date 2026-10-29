@@ -1,0 +1,27 @@
+{
+  "name": "VitrineCityLobby",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "ModeRoutes": {
+        "$path": "src/ReplicatedStorage/ModeRoutes.luau"
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "LobbyServer": {
+        "$path": "src/ServerScriptService/LobbyServer.server.luau"
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "LobbyClient": {
+          "$path": "src/StarterPlayer/StarterPlayerScripts/LobbyClient.client.luau"
+        }
+      }
+    }
+  }
+}
