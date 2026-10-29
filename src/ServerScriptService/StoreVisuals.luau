@@ -28,7 +28,11 @@ StoreVisuals.Themes = {
 local function block(parent, makePart, name, size, at, color, material, collide, alpha)
     local p = makePart(parent, name, size, at, color)
     if material then p.Material = material end
-    if collide == false then p.CanCollide = false end
+    if collide == false then
+        p.CanCollide = false
+        p.CanTouch = false
+        p.CastShadow = false
+    end
     if alpha then p.Transparency = alpha end
     return p
 end
@@ -287,7 +291,14 @@ function StoreVisuals.BuildShelf(model, lot, product, idx, makePart)
         local item = block(model, makePart, product.name .. " embalagem " .. n,
             itemSize, Vector3.new(x, itemY, z + zOffset),
             product.color, Enum.Material.SmoothPlastic, false)
-        if product.category == "pao" then item.Shape = Enum.PartType.Ball end
+        if product.category == "pao" then
+            item.Shape = Enum.PartType.Ball
+        elseif product.category == "queijo" then
+            item.Shape = Enum.PartType.Cylinder
+        elseif product.category == "roupa" or product.category == "arroz" then
+            item.Material = Enum.Material.Fabric
+        end
+        item.CastShadow = false
         item.Transparency = 1
         goods[n] = item
     end
