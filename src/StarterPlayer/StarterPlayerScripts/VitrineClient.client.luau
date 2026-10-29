@@ -86,13 +86,13 @@ pad.PaddingBottom = UDim.new(0, 10)
 pad.Parent = panel
 
 local heading = text(panel, "VITRINE CITY", 27, 19, C.bright, true)
-local summary = text(panel, "Conectando ao mercado...", 79, 12, C.muted)
+local summary = text(panel, "Conectando ao mercado...", 101, 12, C.muted)
 summary.Position = UDim2.fromOffset(0, 29)
 
 local scroll = Instance.new("ScrollingFrame")
 scroll.Name = "Inventário"
-scroll.Position = UDim2.fromOffset(0, 111)
-scroll.Size = UDim2.new(1, 0, 1, -115)
+scroll.Position = UDim2.fromOffset(0, 132)
+scroll.Size = UDim2.new(1, 0, 1, -136)
 scroll.BackgroundTransparency = 1
 scroll.BorderSizePixel = 0
 scroll.ScrollBarThickness = 5
@@ -232,14 +232,29 @@ end
 
 local function render(state)
     latest = state
+    if state.loadError then
+        heading.Text = "VITRINE CITY — DADOS INDISPONÍVEIS"
+        summary.Text = state.loadError
+        summary.TextColor3 = C.red
+        panel.Visible = true
+        opened = true
+        toggle.Text = "FECHAR X"
+        return
+    end
+    summary.TextColor3 = C.muted
     local competitive = state.mode ~= "normal"
     heading.Text = "VITRINE CITY  |  " .. (state.mode == "normal" and "RUA LIVRE" or (state.mode == "price_war" and "GUERRA DE PREÇOS" or "GUERRA COMERCIAL"))
     heading.TextSize = compact and 16 or 19
     local status = state.lot > 0 and ("Sua loja: " .. state.lot) or "Sem loja: aproxime-se de uma placa amarela"
     if state.eliminated then status = "FALÊNCIA — aguarde a próxima rodada" end
+    local saveInfo = state.persistence == "persistent" and "PROGRESSO SALVO"
+        or (state.persistence == "conflict" and "SESSÃO BLOQUEADA" or
+        (state.persistence == "round" and "PARTIDA TEMPORÁRIA" or "TESTE LOCAL SEM SALVAR"))
+    if state.persistence == "conflict" then status = "Sua sessão perdeu a trava de dados. Não é seguro continuar operando." end
     summary.Text = status ..
         "\nCaixa: $" .. math.floor(state.cash) .. "   |   Lucro: $" .. state.profit .. "   |   Vendas: " .. state.sales ..
         "\nHabitantes: " .. state.citizens.residents .. "   |   Empregados: " .. state.citizens.employed ..
+        "\n" .. saveInfo ..
         (competitive and ("\nRodada " .. state.round .. "   |   " .. math.ceil(state.remaining / 60) .. " min restantes") or "")
 
     local savedY = scroll.CanvasPosition.Y
