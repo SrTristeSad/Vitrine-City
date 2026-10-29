@@ -281,12 +281,14 @@ local function rent(player, lot)
     if not account or account.persistence == "conflict" or lot.ownerId or getLot(player.UserId) or account.eliminated then return end
     local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not root or (root.Position - lot.door.Position).Magnitude > 18 then return end
-    if account.cash < Config.LeaseCost then message(player, "Saldo insuficiente para alugar."); return end
-    account.cash -= Config.LeaseCost
-    account.expenses += Config.LeaseCost
+    local restored = savedShops[player.UserId]
+    if not restored then
+        if account.cash < Config.LeaseCost then message(player, "Saldo insuficiente para alugar."); return end
+        account.cash -= Config.LeaseCost
+        account.expenses += Config.LeaseCost
+    end
     account.everRented = true
     lot.ownerId = player.UserId
-    local restored = savedShops[player.UserId]
     if restored then
         for _, p in ipairs(Catalog.List) do
             local id = p.id
