@@ -2,6 +2,9 @@
 -- Configuração por Place. No lançamento: Places separados para modos distintos.
 return {
     Mode = "normal", -- "normal" | "ranked" | "price_war"
+    SaveEnabled = true, -- persistência real apenas na Rua Livre publicada
+    StudioPersistence = false, -- NÃO ativar com dados de produção em Studio
+    AutosaveSeconds = 45,
     Lots = 8,
     StartingCash = 900,
     LeaseCost = 100,
