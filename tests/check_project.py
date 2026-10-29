@@ -29,6 +29,7 @@ for path, suffix in (("ranked.project.json", "Ranked.luau"), ("price_war.project
 sources = [
     "src/ReplicatedStorage/Shared/Config.luau",
     "src/ReplicatedStorage/Shared/Catalog.luau",
+    "src/ReplicatedStorage/Shared/CustomerRoute.luau",
     "src/ReplicatedStorage/Shared/MarketEvents.luau",
     "src/ReplicatedStorage/Shared/ShopAnalytics.luau",
     "src/ReplicatedStorage/Shared/Economy.luau",
@@ -86,6 +87,17 @@ assert 'StoreVisuals.BuildShelf(lot.model, lot, product, idx, part)' in server
 assert "lot.prompt.Enabled = owner == nil" in server
 assert 'prompt.Parent = door' in server
 assert 'lot.statusLamp.Color' in server
+assert 'CustomerRoute = require(Shared:WaitForChild("CustomerRoute"))' in server
+for feature in ("CustomerRoute.Approach", "CustomerRoute.Checkout", "CustomerRoute.Exit",
+                "CustomerRoute.Duration", 'event("OpenShop")',
+                "lot.managementPrompt.Triggered", "openShopEvent:FireClient"):
+    assert feature in server, feature
+assert 'WaitForChild("OpenShop")' in client
+assert 'openShopEvent.OnClientEvent:Connect' in client
+assert (root / "tests/customer_route.spec.luau").exists()
+for path in ("ranked.project.json", "price_war.project.json"):
+    shared = json.loads((root / path).read_text(encoding="utf-8"))["tree"]["ReplicatedStorage"]["Shared"]
+    assert shared["CustomerRoute"]["$path"].endswith("CustomerRoute.luau")
 assert "Config.MaxVisibleCustomers" in server
 assert "person.wallet < price" in server
 assert "account.cash -= cost" in server
