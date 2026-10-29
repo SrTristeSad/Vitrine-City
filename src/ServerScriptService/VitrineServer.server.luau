@@ -585,6 +585,15 @@ local function returnToLobby(player)
         warn("Vitrine City: falha no retorno ao lobby: " .. tostring(err))
         message(player, "Falha na conexão com o lobby. Tente novamente.")
         sendState(player)
+    else
+        -- Fallback: nem toda falha de conexão precisa disparar o evento de erro imediatamente.
+        task.delay(50, function()
+            if player.Parent == Players and returning[userId] then
+                returning[userId] = nil
+                message(player, "O retorno demorou demais; você pode tentar novamente.")
+                sendState(player)
+            end
+        end)
     end
 end
 
@@ -819,7 +828,7 @@ task.spawn(function()
             for _, player in ipairs(Players:GetPlayers()) do
                 local uid = player.UserId
                 local account = accounts[uid]
-                if account and account.persistence == "persistent" and not closing[uid] then
+                if account and account.persistence == "persistent" and not closing[uid] and not returning[uid] then
                     local snapshot = profileSnapshot(uid)
                     task.spawn(function()
                         local ok, reason = ProfileStore.Save(uid, snapshot, Catalog)
