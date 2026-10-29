@@ -20,6 +20,15 @@ jobs:
           unzip -q /tmp/rojo.zip -d /tmp/rojo-cli
           chmod +x /tmp/rojo-cli/rojo
           echo "/tmp/rojo-cli" >> "$GITHUB_PATH"
+      - name: Install Luau compiler 0.744
+        run: |
+          curl -fLsS https://github.com/luau-lang/luau/releases/download/0.744/luau-ubuntu.zip -o /tmp/luau.zip
+          mkdir -p /tmp/luau-cli
+          unzip -q /tmp/luau.zip -d /tmp/luau-cli
+          chmod +x /tmp/luau-cli/luau-compile
+      - name: Check Luau syntax
+        run: |
+          find src -name '*.luau' -print0 | xargs -0 -n 1 /tmp/luau-cli/luau-compile >/dev/null
       - name: Build Roblox place
         run: rojo build default.project.json -o VitrineCity.rbxlx
       - name: Save playable Studio place artifact
