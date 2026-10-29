@@ -17,6 +17,8 @@ for path in ("lobby.project.json", "ranked.project.json", "price_war.project.jso
     assert extra["tree"]["$className"] == "DataModel", path
     assert "ReplicatedStorage" in extra["tree"] and "ServerScriptService" in extra["tree"], path
 assert json.loads((root / "lobby.project.json").read_text(encoding="utf-8"))["tree"]["ReplicatedStorage"]["ModeRoutes"]["$path"].endswith("ModeRoutes.luau")
+lobby_tree = json.loads((root / "lobby.project.json").read_text(encoding="utf-8"))["tree"]
+assert lobby_tree["ServerScriptService"]["GlobalMatchmaker"]["$path"].endswith("GlobalMatchmaker.luau")
 for path, suffix in (("ranked.project.json", "Ranked.luau"), ("price_war.project.json", "PriceWar.luau")):
     shared = json.loads((root / path).read_text(encoding="utf-8"))["tree"]["ReplicatedStorage"]["Shared"]
     assert shared["Config"]["$path"].endswith(suffix)
@@ -31,6 +33,7 @@ sources = [
     "src/ServerScriptService/VitrineServer.server.luau",
     "src/ServerScriptService/ProfileStore.luau",
     "src/ServerScriptService/LobbyServer.server.luau",
+    "src/ServerScriptService/GlobalMatchmaker.luau",
     "src/StarterPlayer/StarterPlayerScripts/LobbyClient.client.luau",
     "src/ReplicatedStorage/ModeRoutes.luau",
     "src/ReplicatedStorage/Shared/Configs/Ranked.luau",
@@ -89,6 +92,19 @@ assert 'TeleportInitFailed' in lobby_server
 assert 'RunService:IsStudio()' in lobby_server
 assert 'SetAttribute("Action"' in lobby_client
 assert 'ModeRoutes' in lobby_server
+assert 'GlobalMatchmaker.new' in lobby_server
+assert 'globalMatch:Join' in lobby_server
+assert 'globalMatch:Cancel' in lobby_server
+assert 'globalMatch:TeleportFailed' in lobby_server
+matchmaker = (root / "src/ServerScriptService/GlobalMatchmaker.luau").read_text(encoding="utf-8")
+routes = (root / "src/ReplicatedStorage/ModeRoutes.luau").read_text(encoding="utf-8")
+assert 'GlobalMatchmakingEnabled = true' in routes
+for api in ("GetSortedMap", "GetRangeAsync", "UpdateAsync", "GetAsync", "TeleportAsync"):
+    assert api in matchmaker, f"Global matchmaking missing {api}"
+for invariant in ('_rollback', 'self:_cancelRecord', 'isValidTicket', 'ReservedServerId',
+                  'LOCK_SECONDS', 'POLL_SECONDS', 'WAIT_LEASE_SECONDS', 'MATCH_TTL'):
+    assert invariant in matchmaker, f"Global matchmaking missing {invariant}"
+assert 'data.globalQueue' in (root / "src/StarterPlayer/StarterPlayerScripts/LobbyClient.client.luau").read_text(encoding="utf-8")
 assert 'cfg.Mode = "ranked"' in (root / "src/ReplicatedStorage/Shared/Configs/Ranked.luau").read_text(encoding="utf-8")
 assert 'cfg.Mode = "price_war"' in (root / "src/ReplicatedStorage/Shared/Configs/PriceWar.luau").read_text(encoding="utf-8")
 
