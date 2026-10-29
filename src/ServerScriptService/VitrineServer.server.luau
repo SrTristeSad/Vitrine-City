@@ -12,10 +12,13 @@ local Config = require(Shared:WaitForChild("Config"))
 local Catalog = require(Shared:WaitForChild("Catalog"))
 local Economy = require(Shared:WaitForChild("Economy"))
 local Population = require(Shared:WaitForChild("Population"))
+local MarketEvents = require(Shared:WaitForChild("MarketEvents"))
 local ProfileStore = require(script.Parent:WaitForChild("ProfileStore"))
 local Routes = require(ReplicatedStorage:WaitForChild("ModeRoutes"))
 local rng = Random.new()
 local population = Population.Create(Config.VirtualResidents, rng)
+local marketEvent = MarketEvents.Start()
+local marketBoardText
 local competitive = Config.Mode ~= "normal"
 local validCompetitiveServer = not competitive or RunService:IsStudio()
     or (game.PrivateServerId ~= "" and game.PrivateServerOwnerId == 0)
@@ -170,6 +173,10 @@ local function makeMap()
             refreshShelf(lot)
         end
     end
+    local marketBoard = part(map, "Jornal da Rua", Vector3.new(1, 7, 10),
+        Vector3.new(-95, 3.5, -19), Color3.fromRGB(29, 53, 76))
+    marketBoard.CanCollide = false
+    marketBoardText = sign(marketBoard, "MERCADO: Dia comum", Vector3.new(0, 4, 0))
     local spawn = Instance.new("SpawnLocation")
     spawn.Name = "Praça central"
     spawn.Size = Vector3.new(10, 1, 10)
@@ -353,6 +360,7 @@ local function sendState(player)
         lot = lot and lot.id or 0, hasEmployee = lot ~= nil and lot.employeeId ~= nil,
         eliminated = account.eliminated, products = products, ranking = ranking, bids = pending,
         round = round, remaining = remaining, citizens = Population.Stats(population),
+        market = { id = marketEvent.id, title = marketEvent.title, description = marketEvent.description },
         customers = customerVisits, customerSales = completedSales,
     })
 end
@@ -390,7 +398,7 @@ local function generateCustomer()
         if lot.ownerId then table.insert(open, lot) end
     end
     if #open == 0 then return end
-    local person, need = Population.StartPurchase(population, Catalog, Economy, rng)
+    local person, need = Population.StartPurchase(population, Catalog, Economy, rng, marketEvent, MarketEvents)
     if not person then return end
     local startedRound = round
     local arrivalX = rng:NextNumber(-88, 88)
@@ -468,7 +476,8 @@ end
 local function replenishSupplier()
     for _, p in ipairs(Catalog.List) do
         -- Limitar estoque encalhado para não gerar números sem fim em servidores longos.
-        supplier[p.id] = math.min(p.initialSupply * 3, supplier[p.id] + p.shipment)
+        local delivery = math.max(0, math.floor(p.shipment * MarketEvents.SupplyFactor(marketEvent, p.category) + 0.5))
+        supplier[p.id] = math.min(p.initialSupply * 3, supplier[p.id] + delivery)
         settleBids(p)
     end
 end
@@ -511,6 +520,15 @@ local function payBills()
         end
     end
     Population.StartDay(population)
+    if population.days % (Config.MarketEventEveryDays or 2) == 0 then
+        marketEvent = MarketEvents.Next(marketEvent, rng)
+        if marketBoardText then
+            marketBoardText.Text = "NOTÍCIAS DO MERCADO\n" .. marketEvent.title
+        end
+        for _, player in ipairs(Players:GetPlayers()) do
+            message(player, "Mercado: " .. marketEvent.title .. " — " .. marketEvent.description)
+        end
+    end
 end
 
 local function endRound(reason)
@@ -539,6 +557,8 @@ local function endRound(reason)
     end
     for _, p in ipairs(Catalog.List) do supplier[p.id] = p.initialSupply end
     population = Population.Create(Config.VirtualResidents, rng)
+    marketEvent = MarketEvents.Start()
+    if marketBoardText then marketBoardText.Text = "NOTÍCIAS DO MERCADO\n" .. marketEvent.title end
     customerVisits, completedSales = 0, 0
     round += 1
     remaining, elapsedRound = Config.RoundSeconds, 0
