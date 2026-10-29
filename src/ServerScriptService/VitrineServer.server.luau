@@ -1,5 +1,5 @@
 --!nonstrict
--- Vitrine City | servidor autoritativo. Progresso de sessão, sem DataStore.
+-- Vitrine City | servidor autoritativo. Rua Livre com DataStore em produção.
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
@@ -10,6 +10,7 @@ local Config = require(Shared:WaitForChild("Config"))
 local Catalog = require(Shared:WaitForChild("Catalog"))
 local Economy = require(Shared:WaitForChild("Economy"))
 local Population = require(Shared:WaitForChild("Population"))
+local ProfileStore = require(script.Parent:WaitForChild("ProfileStore"))
 local rng = Random.new()
 local population = Population.Create(Config.VirtualResidents, rng)
 local competitive = Config.Mode ~= "normal"
@@ -29,6 +30,7 @@ local map = Instance.new("Folder")
 map.Name = "VitrineCityMap"
 map.Parent = Workspace
 local accounts, lots, supplier, bids = {}, {}, {}, {}
+local savedShops, closing = {}, {}
 local activeCustomers, customerVisits, completedSales = 0, 0, 0
 local round = 1
 local remaining = Config.RoundSeconds
@@ -246,9 +248,37 @@ local function refundBids(userId)
     end
 end
 
+local function shopSnapshot(lot)
+    if not lot then return nil end
+    local copy = { stock = {}, shelf = {}, prices = {}, costValue = {},
+        reputation = lot.reputation, hasEmployee = lot.employeeId ~= nil }
+    for _, product in ipairs(Catalog.List) do
+        local id = product.id
+        copy.stock[id] = lot.stock[id]
+        copy.shelf[id] = lot.shelf[id]
+        copy.prices[id] = lot.prices[id]
+        copy.costValue[id] = math.floor(lot.costValue[id] + 0.5)
+    end
+    return copy
+end
+
+local function profileSnapshot(userId)
+    local account = accounts[userId]
+    if not account then return nil end
+    local lot = getLot(userId)
+    return {
+        cash = math.floor(account.cash),
+        revenue = math.floor(account.revenue),
+        expenses = math.floor(account.expenses),
+        sales = account.sales,
+        penalties = math.floor(account.penalties),
+        shop = shopSnapshot(lot) or savedShops[userId],
+    }
+end
+
 local function rent(player, lot)
     local account = accounts[player.UserId]
-    if not account or lot.ownerId or getLot(player.UserId) or account.eliminated then return end
+    if not account or account.persistence == "conflict" or lot.ownerId or getLot(player.UserId) or account.eliminated then return end
     local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not root or (root.Position - lot.door.Position).Magnitude > 18 then return end
     if account.cash < Config.LeaseCost then message(player, "Saldo insuficiente para alugar."); return end
@@ -256,8 +286,27 @@ local function rent(player, lot)
     account.expenses += Config.LeaseCost
     account.everRented = true
     lot.ownerId = player.UserId
+    local restored = savedShops[player.UserId]
+    if restored then
+        for _, p in ipairs(Catalog.List) do
+            local id = p.id
+            lot.stock[id], lot.shelf[id] = restored.stock[id] or 0, restored.shelf[id] or 0
+            lot.prices[id], lot.costValue[id] = restored.prices[id] or p.retail, restored.costValue[id] or 0
+        end
+        lot.reputation = restored.reputation or 50
+        if restored.hasEmployee then
+            local id = Population.Hire(population, lot.id)
+            if id then
+                lot.employeeId = id
+                lot.employeeModel = npcModel("Repositor", lot.x - 10, lot.z, true)
+            end
+        end
+        savedShops[player.UserId] = nil
+        refreshShelf(lot)
+    end
     updateSign(lot)
-    message(player, "Loja " .. lot.id .. " alugada! Compre mercadorias, reponha e defina os preços.")
+    message(player, restored and "Loja recuperada! Estoque anterior restaurado." or
+        ("Loja " .. lot.id .. " alugada! Compre mercadorias, reponha e defina os preços."))
 end
 
 local function sendState(player)
@@ -290,6 +339,7 @@ local function sendState(player)
     end
     stateEvent:FireClient(player, {
         mode = Config.Mode, cash = account.cash, sales = account.sales,
+        persistence = account.persistence or "session",
         profit = math.floor(account.revenue - account.expenses),
         lot = lot and lot.id or 0, hasEmployee = lot ~= nil and lot.employeeId ~= nil,
         eliminated = account.eliminated, products = products, ranking = ranking, bids = pending,
@@ -434,6 +484,7 @@ local function payBills()
                         refundBids(userId)
                         for _, cost in pairs(lot.costValue) do account.expenses += cost end
                         resetLot(lot)
+                        savedShops[userId] = nil
                         if Config.Mode == "price_war" then
                             account.eliminated = true
                             message(Players:GetPlayerByUserId(userId), "Sua empresa faliu: eliminado da Guerra de Preços!")
@@ -489,6 +540,7 @@ local function handleAction(player, action, payload)
     local account = accounts[player.UserId]
     if not account then return end
     if action == "GetState" then sendState(player); return end
+    if account.persistence == "conflict" then message(player, "Sua sessão está bloqueada para proteger os dados."); return end
     if type(payload) ~= "table" then return end
     local lot = getLot(player.UserId)
     if not lot then message(player, "Alugue uma loja primeiro, na placa amarela da entrada."); return end
@@ -576,22 +628,81 @@ actionEvent.OnServerEvent:Connect(function(player, action, payload)
 end)
 
 local function join(player)
+    local profile, mode
+    if competitive then
+        profile = {
+            cash = Config.StartingCash, revenue = 0, expenses = 0,
+            sales = 0, penalties = 0,
+        }
+        mode = "round"
+    else
+        profile, mode = ProfileStore.Load(player.UserId, Catalog)
+    end
+    if player.Parent ~= Players then
+        if mode == "persistent" and profile then
+            ProfileStore.Release(player.UserId, profile, Catalog)
+        end
+        return
+    end
+    if not profile then
+        stateEvent:FireClient(player, {
+            loadError = mode == "locked" and "Sua Rua Livre ainda está aberta em outro servidor. Entre novamente após encerrar a sessão anterior."
+                or "Dados indisponíveis. Entre novamente mais tarde; não iniciaremos um perfil vazio.",
+        })
+        warn("Vitrine City: impedindo conta sem dados: " .. player.UserId .. " / " .. tostring(mode))
+        return
+    end
     accounts[player.UserId] = {
-        cash = Config.StartingCash, reserved = 0, penalties = 0,
-        revenue = 0, expenses = 0, sales = 0,
-        eliminated = false, everRented = false,
+        cash = profile.cash, reserved = 0, penalties = profile.penalties or 0,
+        revenue = profile.revenue, expenses = profile.expenses, sales = profile.sales,
+        eliminated = false, everRented = false, persistence = mode,
     }
-    task.delay(1.5, function() if player.Parent == Players then sendState(player) end end)
+    if not competitive then
+        savedShops[player.UserId] = profile.shop
+    end
+    sendState(player)
+    if mode == "session" then
+        message(player, "Modo Studio: dados temporários. O salvamento da Rua Livre será usado no jogo publicado.")
+    elseif mode == "persistent" then
+        message(player, "Perfil carregado com sucesso. Alugue um ponto para recuperar seu estoque.")
+    end
 end
-Players.PlayerAdded:Connect(join)
-Players.PlayerRemoving:Connect(function(player)
-    refundBids(player.UserId)
-    local lot = getLot(player.UserId)
-    if lot then resetLot(lot) end
-    accounts[player.UserId] = nil
-    lastAction[player.UserId] = nil
+
+local function leave(player)
+    local userId = player.UserId
+    if closing[userId] then return end
+    closing[userId] = true
+    local account = accounts[userId]
+    if account then
+        local snapshot = profileSnapshot(userId)
+        refundBids(userId)
+        local lot = getLot(userId)
+        if lot then resetLot(lot) end
+        if not competitive and account.persistence == "persistent" then
+            local success, reason = ProfileStore.Release(userId, snapshot, Catalog)
+            if not success then warn("Vitrine City: falha ao salvar saída de " .. userId .. ": " .. tostring(reason)) end
+        end
+    end
+    accounts[userId], savedShops[userId], lastAction[userId] = nil, nil, nil
+    closing[userId] = nil
+end
+
+Players.PlayerAdded:Connect(function(player) task.spawn(join, player) end)
+Players.PlayerRemoving:Connect(leave)
+for _, player in ipairs(Players:GetPlayers()) do task.spawn(join, player) end
+
+game:BindToClose(function()
+    for _, player in ipairs(Players:GetPlayers()) do
+        task.spawn(leave, player)
+    end
+    local start = os.clock()
+    while os.clock() - start < 25 do
+        local busy = false
+        for _, _ in pairs(closing) do busy = true; break end
+        if not busy then break end
+        task.wait(0.1)
+    end
 end)
-for _, player in ipairs(Players:GetPlayers()) do join(player) end
 
 task.spawn(function()
     while true do
@@ -616,12 +727,35 @@ task.spawn(function()
 end)
 
 task.spawn(function()
-    local bills, deliveries, broadcast = 0, 0, 0
+    local bills, deliveries, broadcast, autosave = 0, 0, 0, 0
     while true do
         local dt = task.wait(1)
         bills += dt
         deliveries += dt
         broadcast += dt
+        autosave += dt
+        if not competitive and autosave >= Config.AutosaveSeconds then
+            autosave = 0
+            for _, player in ipairs(Players:GetPlayers()) do
+                local uid = player.UserId
+                local account = accounts[uid]
+                if account and account.persistence == "persistent" and not closing[uid] then
+                    local snapshot = profileSnapshot(uid)
+                    task.spawn(function()
+                        local ok, reason = ProfileStore.Save(uid, snapshot, Catalog)
+                        if not ok then
+                            warn("Vitrine City: autosave de " .. uid .. " falhou: " .. tostring(reason))
+                            if reason == "lock_lost" and accounts[uid] then
+                                accounts[uid].persistence = "conflict"
+                                message(player, "Sessão perdida em outro servidor: operações suspensas para proteger seu progresso.")
+                            elseif accounts[uid] then
+                                message(player, "Salvamento temporariamente indisponível. Tentaremos novamente.")
+                            end
+                        end
+                    end)
+                end
+            end
+        end
         if competitive then
             remaining -= dt
             elapsedRound += dt
