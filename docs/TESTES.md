@@ -1,5 +1,8 @@
 # Roteiro de testes — pendente de execução no Studio
 
+## Clientes e caixa interativo — v0.9
+Executar o roteiro em docs/CLIENTES_E_CAIXA.md. Confirmar NPC andando pela entrada, gôndola e caixa em ambos os lados da rua. Validar visita sem compra, saída com sacola somente após venda e prompt da caixa limitado ao dono. Rodar testes/customer_route.spec.luau; medir impacto em Android.
+
 ## Reforma visual das lojas — v0.8
 Executar o roteiro de docs/REFORMA_VISUAL_LOJAS.md. Verificar vitrines, toldo, fachadas personalizadas, etiquetas de preço, letreiro do dono e fluxo de NPCs pela entrada. Comparar com screenshots do Studio; CI não substitui avaliação visual.
 
