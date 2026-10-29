@@ -357,7 +357,7 @@ end
 local function sale(lot, product, expectedPrice, expectedOwner, person)
     if not lot.ownerId or lot.ownerId ~= expectedOwner then return false end
     local account = accounts[lot.ownerId]
-    if not account or not product or account.eliminated then return false end
+    if not account or not product or account.eliminated or account.persistence == "conflict" then return false end
     local price = lot.prices[product.id]
     if price ~= expectedPrice or lot.shelf[product.id] < 1 or person.wallet < price then return false end
     local units = lot.shelf[product.id] + lot.stock[product.id]
@@ -470,7 +470,7 @@ local function payBills()
     for _, lot in ipairs(lots) do
         if lot.ownerId then
             local account = accounts[lot.ownerId]
-            if account then
+            if account and account.persistence ~= "conflict" then
                 local wages = lot.employeeId and Config.EmployeeWage or 0
                 local bill = Config.DailyRent + wages
                 if account.cash >= bill then
@@ -700,7 +700,7 @@ game:BindToClose(function()
     local start = os.clock()
     while os.clock() - start < 25 do
         local busy = false
-        for _, _ in pairs(closing) do busy = true; break end
+        for _userId, _isClosing in pairs(closing) do busy = true; break end
         if not busy then break end
         task.wait(0.1)
     end
