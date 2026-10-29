@@ -1,5 +1,13 @@
 # Roteiro de testes — pendente de execução no Studio
 
+## Primeira execução em Place não publicado
+O arquivo `VitrineCity-RuaLivre.rbxlx` deve abrir em Play mesmo antes de publicar a experiência. Com `StudioPersistence = false`, o `ProfileStore` não deve obter `DataStoreService:GetDataStore` no momento do `require`. O `GetDataStore` é inicializado apenas quando há uma gravação/leitura real de perfil persistente.
+
+Se o Output mostrar `You must publish this place to the web to access DataStore` apontando para `ProfileStore` durante a inicialização, provavelmente foi aberta uma compilação antiga (v0.7 anterior à correção). Baixar novamente o artefato mais recente gerado pela CI após o commit `8b57c9b`. O erro subsequente `VitrineRemotes` aguardando indefinidamente é consequência do servidor não chegar a criar os RemoteEvents.
+
+Cenário de aceitação: abrir `.rbxlx` novo, Play, o mapa é gerado, surgem oito lojas, a interface aparece e o Output não contém o erro de DataStore. Isso ainda precisa de validação real no Studio.
+
+
 ## Preparação
 Instalar Roblox Studio e Rojo 7 no computador; `rojo build default.project.json -o VitrineCity.rbxlx`; abrir o .rbxlx e dar Play. Confirmar Output sem erros. O pacote foi escrito e revisado estaticamente, **não executado no Roblox Studio**.
 
