@@ -125,11 +125,17 @@ local function teleportGroup(mode, players)
     if #players == 0 then return end
     local cfg = Routes[mode]
     if not prepared(mode) then
-        for _, player in ipairs(players) do notify(player, "O Place deste modo ainda não foi configurado.") end
+        for _, player in ipairs(players) do
+            queuedMode[player.UserId] = nil
+            notify(player, "O Place deste modo ainda não foi configurado.")
+        end
         return false
     end
     if RunService:IsStudio() then
-        for _, player in ipairs(players) do notify(player, "O lobby funciona no Studio, mas teleporte exige teste no aplicativo Roblox publicado.") end
+        for _, player in ipairs(players) do
+            queuedMode[player.UserId] = nil
+            notify(player, "O lobby funciona no Studio, mas teleporte exige teste no aplicativo Roblox publicado.")
+        end
         return false
     end
 
@@ -262,7 +268,10 @@ task.spawn(function()
                 if #batch >= cfg.minPlayers then
                     task.spawn(teleportGroup, mode, batch)
                 else
-                    for _, p in ipairs(batch) do requeue(p, mode) end
+                    for _, p in ipairs(batch) do
+                        queuedMode[p.UserId] = nil
+                        requeue(p, mode)
+                    end
                 end
             end
         end
