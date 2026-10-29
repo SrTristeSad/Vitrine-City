@@ -46,11 +46,11 @@ catalog = (root / sources[1]).read_text(encoding="utf-8")
 ids = re.findall(r'\bid = "([^"]+)"', catalog)
 assert len(ids) == 6 and len(set(ids)) == len(ids), f"Unexpected catalog: {ids}"
 
-economy = (root / sources[2]).read_text(encoding="utf-8")
-population = (root / sources[3]).read_text(encoding="utf-8")
-server = (root / sources[4]).read_text(encoding="utf-8")
-profiles = (root / sources[5]).read_text(encoding="utf-8")
-client = (root / sources[6]).read_text(encoding="utf-8")
+economy = (root / "src/ReplicatedStorage/Shared/Economy.luau").read_text(encoding="utf-8")
+population = (root / "src/ReplicatedStorage/Shared/Population.luau").read_text(encoding="utf-8")
+server = (root / "src/ServerScriptService/VitrineServer.server.luau").read_text(encoding="utf-8")
+profiles = (root / "src/ServerScriptService/ProfileStore.luau").read_text(encoding="utf-8")
+client = (root / "src/StarterPlayer/StarterPlayerScripts/VitrineClient.client.luau").read_text(encoding="utf-8")
 for name in ("NewNeed", "PickOffer", "NetWorth"):
     assert f"function Economy.{name}" in economy
 for name in ("Create", "StartPurchase", "FinishPurchase", "Hire", "PayWorker", "Layoff", "StartDay", "Stats"):
