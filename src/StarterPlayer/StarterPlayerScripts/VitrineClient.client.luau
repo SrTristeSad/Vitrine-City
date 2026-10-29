@@ -247,7 +247,7 @@ local function render(state)
     heading.TextSize = compact and 16 or 19
     local status = state.lot > 0 and ("Sua loja: " .. state.lot) or "Sem loja: aproxime-se de uma placa amarela"
     if state.eliminated then status = "FALÊNCIA — aguarde a próxima rodada" end
-    local saveInfo = state.persistence == "persistent" and "PROGRESSO SALVO"
+    local saveInfo = state.persistence == "persistent" and "SALVAMENTO ATIVO"
         or (state.persistence == "conflict" and "SESSÃO BLOQUEADA" or
         (state.persistence == "round" and "PARTIDA TEMPORÁRIA" or "TESTE LOCAL SEM SALVAR"))
     if state.persistence == "conflict" then status = "Sua sessão perdeu a trava de dados. Não é seguro continuar operando." end
