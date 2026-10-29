@@ -56,6 +56,25 @@ function Route.Exit(lot, arrivalX)
     }
 end
 
+-- Ponto de descanso do repositor, ao lado do balcão (sem bloquear caixa/porta).
+function Route.StaffHome(lot)
+    return lot.x + 6.8, front(lot) + lot.side * 6.0
+end
+
+function Route.StaffToShelf(lot, productIndex)
+    local shelfX, shelfZ = Route.ShelfPosition(lot, productIndex)
+    local _, checkoutZ = Route.StaffHome(lot)
+    return {
+        step(lot.x, checkoutZ),
+        step(lot.x, shelfZ),
+        step(shelfX, shelfZ, 0.55),
+    }
+end
+
+function Route.StaffReturn(lot, productIndex)
+    return Route.Checkout(lot, productIndex)
+end
+
 function Route.Duration(fromX, fromZ, toX, toZ)
     local dist = math.sqrt((fromX - toX)^2 + (fromZ - toZ)^2)
     return math.clamp(dist / 12, 0.28, 5.5)
