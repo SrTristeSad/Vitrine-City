@@ -39,6 +39,9 @@
       },
       "ProfileStore": {
         "$path": "src/ServerScriptService/ProfileStore.luau"
+      },
+      "StoreVisuals": {
+        "$path": "src/ServerScriptService/StoreVisuals.luau"
       }
     },
     "StarterPlayer": {
