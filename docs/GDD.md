@@ -12,6 +12,12 @@ Alugar ponto -> comprar estoque -> colocar na prateleira -> definir preço -> ob
 - PlaceIds exigem configuração antes do lançamento. Teleporte ainda não testado em ambiente publicado.
 - Ver `docs/MODOS_LOBBY.md`.
 
+## Navegação de retorno — v0.4
+- Cada modo permite voltar ao lobby por botão com confirmação.
+- A Rua Livre exige snapshot e gravação bem-sucedida antes do teleporte; se falhar, o jogador permanece na loja.
+- Competitivos descartam o dinheiro temporário ao sair; o lobby não herda estado econômico da partida.
+- Os quatro PlaceIds (incluindo o Lobby) devem ser configurados manualmente em ModeRoutes.
+
 ## Modo normal — Rua Livre
 - Sem concorrência real pela mesma compra: consumidor procura primeiro um estabelecimento sorteado.
 - Atacado ilimitado, ritmo casual, fechamento com possibilidade de recomeço.
