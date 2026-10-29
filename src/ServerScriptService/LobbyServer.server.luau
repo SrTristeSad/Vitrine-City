@@ -9,6 +9,8 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local Routes = require(ReplicatedStorage:WaitForChild("ModeRoutes"))
+local GlobalMatchmaker = require(script.Parent:WaitForChild("GlobalMatchmaker"))
+local globalMatch
 local remotes = Instance.new("Folder")
 remotes.Name = "LobbyRemotes"
 remotes.Parent = ReplicatedStorage
@@ -67,6 +69,9 @@ local function notify(player, message)
     end
 end
 local function removeFromQueue(player)
+    if globalMatch and globalMatch.enabled then
+        return globalMatch:Cancel(player)
+    end
     local mode = queuedMode[player.UserId]
     if not mode then return false end
     local list = queue[mode]
@@ -100,22 +105,26 @@ local function sendState(player)
         modes[mode] = {
             label = cfg.label,
             configured = typeof(cfg.placeId) == "number" and cfg.placeId > 0,
-            waiting = mode == "normal" and 0 or #queue[mode],
+            waiting = mode == "normal" and 0 or (globalMatch and globalMatch.enabled
+                and globalMatch:Waiting(mode) or #queue[mode]),
             required = cfg.minPlayers,
             maxPlayers = cfg.maxPlayers,
-            remaining = countdownAt[mode] and math.max(0, math.ceil(countdownAt[mode] - os.clock())) or nil,
+            remaining = (globalMatch and globalMatch.enabled) and nil
+                or (countdownAt[mode] and math.max(0, math.ceil(countdownAt[mode] - os.clock())) or nil),
         }
     end
     stateEvent:FireClient(player, {
         modes = modes,
-        queue = queuedMode[player.UserId],
-        busy = inFlight[player.UserId] ~= nil,
+        queue = globalMatch and globalMatch.enabled and globalMatch:GetMode(player) or queuedMode[player.UserId],
+        busy = inFlight[player.UserId] ~= nil or (globalMatch and globalMatch.enabled and globalMatch:Busy(player)) or false,
+        globalQueue = globalMatch and globalMatch.enabled or false,
         localTest = RunService:IsStudio(),
     })
 end
 local function broadcast()
     for _, player in ipairs(Players:GetPlayers()) do sendState(player) end
 end
+globalMatch = GlobalMatchmaker.new(Routes, notify, broadcast)
 
 local function prepared(mode)
     local cfg = Routes[mode]
@@ -171,10 +180,14 @@ end
 local function joinMode(player, mode)
     if mode ~= "normal" and mode ~= "ranked" and mode ~= "price_war" then return end
     if not Routes[mode] then return end
-    if queuedMode[player.UserId] or inFlight[player.UserId] then return end
+    if queuedMode[player.UserId] or inFlight[player.UserId] or
+        (globalMatch.enabled and (globalMatch:GetMode(player) or globalMatch:Busy(player))) then return end
     if not prepared(mode) then notify(player, "Esse modo ainda não tem um Place publicado/configurado."); return end
     if mode == "normal" then
         task.spawn(teleportGroup, mode, { player })
+    elseif globalMatch.enabled then
+        -- O matching é compartilhado por todos os lobbies da mesma experiência.
+        globalMatch:Join(player, mode)
     else
         cleanQueue(mode)
         table.insert(queue[mode], player)
@@ -231,6 +244,10 @@ actionEvent.OnServerEvent:Connect(function(player, action, mode)
 end)
 
 TeleportService.TeleportInitFailed:Connect(function(player, teleportResult, errorMessage, _placeId, _options)
+    if globalMatch.enabled and globalMatch:Busy(player) then
+        globalMatch:TeleportFailed(player, "Não foi possível entrar no servidor reservado. Tente novamente.")
+        return
+    end
     local mode = inFlight[player.UserId]
     if not mode then return end
     inFlight[player.UserId] = nil
@@ -243,7 +260,11 @@ end)
 
 Players.PlayerAdded:Connect(function(player) task.defer(sendState, player) end)
 Players.PlayerRemoving:Connect(function(player)
-    removeFromQueue(player)
+    if globalMatch.enabled then
+        globalMatch:Remove(player)
+    else
+        removeFromQueue(player)
+    end
     inFlight[player.UserId] = nil
     inFlightAt[player.UserId] = nil
     lastRequest[player.UserId] = nil
@@ -266,6 +287,7 @@ task.spawn(function()
                 end
             end
         end
+        if not globalMatch.enabled then
         for _, mode in ipairs({ "ranked", "price_war" }) do
             cleanQueue(mode)
             local cfg = Routes[mode]
@@ -292,8 +314,10 @@ task.spawn(function()
                 end
             end
         end
+        end
         broadcast()
     end
 end)
 
-print("Vitrine City: lobby iniciado; matchmaking local por servidor.")
+print("Vitrine City: lobby iniciado; matchmaking " ..
+    (globalMatch.enabled and "GLOBAL (MemoryStore)" or "local (Studio / desabilitado)"))
