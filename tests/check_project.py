@@ -30,6 +30,7 @@ sources = [
     "src/ReplicatedStorage/Shared/Config.luau",
     "src/ReplicatedStorage/Shared/Catalog.luau",
     "src/ReplicatedStorage/Shared/CustomerRoute.luau",
+    "src/ReplicatedStorage/Shared/CustomerMotion.luau",
     "src/ReplicatedStorage/Shared/ShopGuide.luau",
     "src/ReplicatedStorage/Shared/MarketEvents.luau",
     "src/ReplicatedStorage/Shared/ShopAnalytics.luau",
@@ -111,6 +112,19 @@ for mode_path in ("ranked.project.json", "price_war.project.json"):
     shared = json.loads((root / mode_path).read_text(encoding="utf-8"))["tree"]["ReplicatedStorage"]["Shared"]
     assert shared["ShopGuide"]["$path"].endswith("ShopGuide.luau")
 assert "Config.MaxVisibleCustomers" in server
+assert 'CustomerMotion = require(Shared:WaitForChild("CustomerMotion"))' in server
+assert "CustomerMotion.StepDistance" in server and "CustomerMotion.Stride" in server
+assert 'lastPose < 0.08' in server
+assert "model:PivotTo(startFacing)" in server
+assert "endFacing" in server and "CFrame.lookAt" in server
+assert 'checkoutLabel.Visible = false' in server
+assert 'lot.checkoutLabel.Text = "+$"' in server
+assert "if owner then sendState(owner) end" in server
+assert (root / "tests/customer_motion.spec.luau").exists()
+for route_path in ("ranked.project.json", "price_war.project.json"):
+    mode_tree = json.loads((root / route_path).read_text(encoding="utf-8"))["tree"]
+    assert mode_tree["ReplicatedStorage"]["Shared"]["CustomerMotion"]["$path"].endswith("CustomerMotion.luau")
+
 assert "person.wallet < price" in server
 assert "account.cash -= cost" in server
 assert "Population.FinishPurchase" in server
