@@ -184,8 +184,8 @@ local function update(data)
             else
                 row.button.Text = data.busy and "CONECTANDO..." or
                     (disabled and "INDISPONÍVEL" or (data.queue and "EM OUTRA FILA" or "ENTRAR"))
-                row.button.BackgroundColor3 = disabled or data.queue and colors.gray or row.accent
-                row.button:SetAttribute("Action", disabled or data.queue and "None" or "Join")
+                row.button.BackgroundColor3 = (disabled or data.queue ~= nil) and colors.gray or row.accent
+                row.button:SetAttribute("Action", (disabled or data.queue ~= nil) and "None" or "Join")
             end
         end
     end
