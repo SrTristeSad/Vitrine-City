@@ -13,6 +13,7 @@ return {
     EmployeeWage = 25,
     EconomicDaySeconds = 90,
     ShipmentSeconds = 65,
+    MarketEventEveryDays = 2, -- notícia nova a cada dois ciclos econômicos
     CustomerInterval = 3.5,
     MaxVisibleCustomers = 12,
     VirtualResidents = 240,
