@@ -53,4 +53,8 @@ assert(restored.visits == 0 and restored.sales == 2 and restored.lost == 0, "San
 assert(restored.reasons.nonsense == nil, "Motivo não reconhecido")
 assert(restored.units.unknown == nil, "Item não reconhecido")
 assert(restored.productRevenue.queijo == 40, "Receita restaurada")
+local corrupted = Analytics.Restore({
+    reasons = 123, demand = "inválido", units = true, productRevenue = false,
+}, catalog)
+assert(corrupted.reasons.too_expensive == 0 and corrupted.units.queijo == 0, "Subtabelas corrompidas")
 print("PASS: motivo de perdas, visitas, conversão, custos, produtos e restauração.")
