@@ -26,6 +26,9 @@ Jogo Roblox **original** em Luau. Uma rua comercial multiplayer com locação de
 20. O painel v0.7 mostra diagnóstico de perda e ledger sem equiparar lucro bruto a lucro líquido. KPIs de lojas salvos devem ser sanitizados. Rodar testes/analytics.spec.luau no CI.
 21. O layout visual fica isolado em StoreVisuals.luau. Não confundir itens cenográficos das vitrines com mercadorias vendáveis; gôndolas reagem ao estoque real e etiquetas aos preços.
 22. Preservar corredor central e entrada com passagem sem colisão, prompt de aluguel junto à fachada e nomes dos lotes. Ver docs/REFORMA_VISUAL_LOJAS.md.
+23. Clientes devem ir de calçada → porta → gôndola → caixa → saída, com percurso definido por CustomerRoute.luau; validar em ambos os lados da rua.
+24. Nunca creditar venda por animação; somente `sale()` valida orçamento, estoque e dono quando o NPC chega ao caixa.
+25. O prompt físico de gerenciamento na caixa só pode abrir o inventário para o proprietário, validado no servidor. Executar `tests/customer_route.spec.luau` no CI.
 
 ## Estrutura
 - `src/ReplicatedStorage/Shared`: Config, Catalog, Economy, Population.
