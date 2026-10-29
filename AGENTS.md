@@ -32,6 +32,8 @@ Jogo Roblox **original** em Luau. Uma rua comercial multiplayer com locação de
 26. ShopGuide é apenas leitura da situação comercial. Não entregar dinheiro nem mercadoria ao jogador para completar tutorial.
 27. O painel inicia fechado, abre no aluguel e continua acessível pelo botão/caixa. No celular, esconder guia quando o painel estiver visível.
 28. Venda bem-sucedida gera confirmação e recibo curto de sessão apenas após a validação server-side em sale(). Rodar `tests/shop_guide.spec.luau` na CI.
+29. CustomerMotion implementa matemática de caminhada sem gerar humanoides extras; os membros usam no máximo 12,5 atualizações/s por NPC e retornam à pose neutra nas paradas.
+30. O indicador +$ no caixa é um único BillboardGui reutilizável por loja. Cada venda válida atualiza saldo e recibos imediatamente; troca de dono deve ocultar o indicador. Ver `docs/CLIENTES_MOVIMENTO_V11.md`.
 
 ## Estrutura
 - `src/ReplicatedStorage/Shared`: Config, Catalog, Economy, Population.
