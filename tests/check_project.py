@@ -71,6 +71,16 @@ assert "ProfileStore" in profiles and "UpdateAsync" in profiles
 assert "RunService:IsStudio()" in profiles and "Config.StudioPersistence" in profiles
 assert "Config.AutosaveSeconds" in server
 assert "state.loadError" in client and "state.persistence" in client
+assert 'ReturnToLobby' in server and 'ReturnToLobby' in client
+assert 'ProfileStore.Save(userId, snapshot, Catalog)' in server
+assert 'TeleportService.TeleportInitFailed' in server
+assert 'lobbyConfigured' in server and 'lobbyConfigured' in client
+assert 'returning[userId]' in server
+routes = (root / "src/ReplicatedStorage/ModeRoutes.luau").read_text(encoding="utf-8")
+assert 'lobby = {' in routes
+for path in ("default.project.json", "ranked.project.json", "price_war.project.json"):
+    place_tree = json.loads((root / path).read_text(encoding="utf-8"))["tree"]
+    assert place_tree["ReplicatedStorage"]["ModeRoutes"]["$path"].endswith("ModeRoutes.luau"), path
 lobby_server = (root / "src/ServerScriptService/LobbyServer.server.luau").read_text(encoding="utf-8")
 lobby_client = (root / "src/StarterPlayer/StarterPlayerScripts/LobbyClient.client.luau").read_text(encoding="utf-8")
 assert 'TeleportService:TeleportAsync' in lobby_server
