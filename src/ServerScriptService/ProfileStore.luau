@@ -12,7 +12,15 @@ local KEY_PREFIX = "player_v1_"
 local LEASE_SECONDS = 180
 local serverToken = HttpService:GenerateGUID(false)
 local saving = {}
-local store = DataStoreService:GetDataStore("VitrineCity_RuaLivre_V1")
+-- GetDataStore não pode ser consultado ao carregar este módulo no Studio sem publicação.
+-- Adiar a aquisição até uma operação persistente real, após checar disabled().
+local store
+local function getStore()
+    if not store then
+        store = DataStoreService:GetDataStore("VitrineCity_RuaLivre_V1")
+    end
+    return store
+end
 
 local function money(v, fallback)
     if typeof(v) ~= "number" or v ~= v or v == math.huge or v == -math.huge then return fallback end
@@ -79,7 +87,7 @@ function ProfileStore.Load(userId, catalog)
         local rejected = nil
         local now = os.time()
         local success, value = pcall(function()
-            return store:UpdateAsync(key, function(old)
+            return getStore():UpdateAsync(key, function(old)
                 if old ~= nil and typeof(old) ~= "table" then rejected = "invalid"; return nil end
                 if old and old.schema ~= VERSION then rejected = "schema"; return nil end
                 if old and typeof(old.lease) == "table" and old.lease.token ~= serverToken and
@@ -120,7 +128,7 @@ local function write(userId, profile, catalog, release)
         local now = os.time()
         local rejected = false
         local success, value = pcall(function()
-            return store:UpdateAsync(key, function(old)
+            return getStore():UpdateAsync(key, function(old)
                 if typeof(old) ~= "table" or old.schema ~= VERSION or
                     typeof(old.lease) ~= "table" or old.lease.token ~= serverToken then
                     rejected = true
