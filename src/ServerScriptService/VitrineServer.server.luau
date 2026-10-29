@@ -313,6 +313,50 @@ local function restock(lot, id)
     return move
 end
 
+-- Funcionário agora faz uma visita física à prateleira ANTES de mover estoque.
+-- No máximo um serviço por loja, independente dos ciclos do servidor.
+local function workEmployee(lot)
+    local worker = lot.employeeModel
+    if not lot.ownerId or not lot.employeeId or not worker or not worker.Parent
+        or lot.workerBusy or returning[lot.ownerId] then return end
+    local ownerId, lease, employeeId = lot.ownerId, lot.leaseVersion, lot.employeeId
+    local product, index = WorkerPlanner.Next(Catalog, lot.stock, lot.shelf, Config.ShelfCapacity)
+    if not product then return end
+    lot.workerBusy, lot.workerProductId = true, product.id
+
+    task.spawn(function()
+        local crate = worker:FindFirstChild("Caixa de reposição")
+        local root = worker.PrimaryPart
+        local gui = root and root:FindFirstChild("Letreiro")
+        local label = gui and gui:FindFirstChild("StatusCliente")
+        local function active()
+            return worker.Parent ~= nil and lot.ownerId == ownerId
+                and lot.leaseVersion == lease and lot.employeeId == employeeId
+                and lot.employeeModel == worker and not returning[ownerId]
+        end
+        local ok, err = pcall(function()
+            if label then label.Text = "REPOSIÇÃO: " .. product.name end
+            if crate then crate.Transparency = 0 end
+            followRoute(worker, CustomerRoute.StaffToShelf(lot, index))
+            if active() then
+                local qty = restock(lot, product.id)
+                if qty > 0 then
+                    refreshShelf(lot)
+                    local player = Players:GetPlayerByUserId(ownerId)
+                    if player then sendState(player) end
+                end
+                followRoute(worker, CustomerRoute.StaffReturn(lot, index))
+            end
+        end)
+        if not ok then warn("Vitrine City: repositor falhou: " .. tostring(err)) end
+        if lot.employeeModel == worker then
+            if crate and crate.Parent then crate.Transparency = 1 end
+            if label and label.Parent then label.Text = "REPOSITOR | DISPONÍVEL" end
+            lot.workerBusy, lot.workerProductId = false, nil
+        end
+    end)
+end
+
 local function resetLot(lot)
     lot.workerBusy, lot.workerProductId = false, nil
     lot.leaseVersion += 1
@@ -455,6 +499,8 @@ local function sendState(player)
         persistence = account.persistence or "session",
         profit = math.floor(account.revenue - account.expenses),
         lot = lot and lot.id or 0, hasEmployee = lot ~= nil and lot.employeeId ~= nil,
+        workerBusy = lot ~= nil and lot.workerBusy or false,
+        workerProduct = lot and lot.workerProductId or nil,
         eliminated = account.eliminated, products = products, ranking = ranking, bids = pending,
         round = round, remaining = remaining, citizens = Population.Stats(population),
         market = { id = marketEvent.id, title = marketEvent.title, description = marketEvent.description },
@@ -986,14 +1032,10 @@ end)
 
 task.spawn(function()
     while true do
-        task.wait(11)
+        task.wait(Config.WorkerCycleSeconds or 11)
         for _, lot in ipairs(lots) do
-            if lot.ownerId and lot.employeeId and not returning[lot.ownerId] then
-                local changed = false
-                for _, p in ipairs(Catalog.List) do
-                    if restock(lot, p.id) > 0 then changed = true end
-                end
-                if changed then refreshShelf(lot) end
+            if lot.ownerId and lot.employeeId then
+                workEmployee(lot)
             end
         end
     end
