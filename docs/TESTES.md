@@ -1,5 +1,8 @@
 # Roteiro de testes — pendente de execução no Studio
 
+## Reforma visual das lojas — v0.8
+Executar o roteiro de docs/REFORMA_VISUAL_LOJAS.md. Verificar vitrines, toldo, fachadas personalizadas, etiquetas de preço, letreiro do dono e fluxo de NPCs pela entrada. Comparar com screenshots do Studio; CI não substitui avaliação visual.
+
 ## Primeira execução em Place não publicado
 O arquivo `VitrineCity-RuaLivre.rbxlx` deve abrir em Play mesmo antes de publicar a experiência. Com `StudioPersistence = false`, o `ProfileStore` não deve obter `DataStoreService:GetDataStore` no momento do `require`. O `GetDataStore` é inicializado apenas quando há uma gravação/leitura real de perfil persistente.
 
