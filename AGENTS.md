@@ -20,6 +20,8 @@ Jogo Roblox **original** em Luau. Uma rua comercial multiplayer com locação de
 14. O lobby rejeita nomes de modo não permitidos pelo servidor. Testar retornos reais no cliente Roblox, não apenas em Studio.
 15. Claims atômicos, nonce por usuário, ticket com TTL e confirmação de match ready são invariantes importantes do matchmaking global. Não substituir por fila local sem avisar.
 16. MemoryStore pode sofrer throttling; documentar vazão e consumo antes de aumentar frequência. Ver docs/MATCHMAKING_GLOBAL.md.
+17. Eventos econômicos são modificadores por categoria, não NPCs extras nem alteração de estoque já possuído. Configurar em MarketEvents.luau.
+18. Otimizar HUD: não recriar todos os cartões quando o inventário não mudou. Evitar luzes dinâmicas e criação contínua de Parts nos ciclos de clientes.
 
 ## Estrutura
 - `src/ReplicatedStorage/Shared`: Config, Catalog, Economy, Population.
@@ -28,7 +30,7 @@ Jogo Roblox **original** em Luau. Uma rua comercial multiplayer com locação de
 - `docs`: GDD, economia, monetização, testes.
 
 ## Próximo trabalho
-O lobby, os quatro Places e o **matchmaking global beta** já estão codificados. Prioridade: configurar os PlaceIds reais no ModeRoutes, publicar em experiência de teste e validar teleportes no cliente Roblox, além de corrigir erros reais do Studio e verificar DataStore. Depois, validar matchmaking global com vários servidores Roblox e implementar reconexão, confirmação de chegada e proteção de entrada tardia. Não adicionar seis modos superficiais antes de estabilizar o principal.
+O lobby, os quatro Places e o **matchmaking global beta** já estão codificados. Prioridade: configurar os PlaceIds reais no ModeRoutes, publicar em experiência de teste e validar teleportes no cliente Roblox, além de corrigir erros reais do Studio e verificar DataStore. Depois, validar matchmaking global com vários servidores Roblox, conferir eventos econômicos no Studio/Android e implementar reconexão, confirmação de chegada e proteção de entrada tardia. Não adicionar seis modos superficiais antes de estabilizar o principal.
 
 ## Padrão de entrega
 Em cada alteração: resumo do comportamento, arquivos alterados, testes efetivamente rodados e limitações. Proteger eventos remotos contra dados falsificados e compras duplicadas. Documentar qualquer mudança de configuração econômica em `docs/ECONOMIA.md`.
