@@ -165,7 +165,7 @@ local function makeMap()
                 prompt = prompt, managementPrompt = managementPrompt,
                 label = shell.signLabel, statusLamp = shell.statusLamp, theme = shell.theme,
                 ownerId = nil, employeeId = nil, employeeModel = nil,
-                leaseVersion = 0, analytics = ShopAnalytics.New(),
+                leaseVersion = 0, analytics = ShopAnalytics.New(), receipts = {},
                 stock = {}, shelf = {}, prices = {}, costValue = {}, displays = {},
                 missedBills = 0, reputation = 50,
             }
@@ -261,6 +261,7 @@ end
 local function resetLot(lot)
     lot.leaseVersion += 1
     lot.analytics = ShopAnalytics.New()
+    lot.receipts = {}
     if lot.employeeId then Population.Layoff(population, lot.employeeId) end
     if lot.employeeModel then lot.employeeModel:Destroy() end
     lot.ownerId, lot.employeeId, lot.employeeModel = nil, nil, nil
@@ -351,6 +352,7 @@ local function rent(player, lot)
         refreshShelf(lot)
     end
     updateSign(lot)
+    openShopEvent:FireClient(player)
     message(player, restored and "Loja recuperada! Estoque anterior restaurado." or
         ("Loja " .. lot.id .. " alugada! Compre mercadorias, reponha e defina os preços."))
 end
@@ -387,6 +389,7 @@ local function sendState(player)
     local metrics = lot and lot.analytics or (stored and stored.analytics)
     stateEvent:FireClient(player, {
         analytics = ShopAnalytics.View(metrics or ShopAnalytics.New(), Catalog),
+        recentSales = lot and lot.receipts or {},
         ledger = account.ledger,
         mode = Config.Mode, cash = account.cash, sales = account.sales,
         lobbyConfigured = Routes.lobby ~= nil and typeof(Routes.lobby.placeId) == "number" and Routes.lobby.placeId > 0,
@@ -423,8 +426,16 @@ local function sale(lot, product, expectedPrice, expectedOwner, expectedLease, p
     account.sales += 1
     completedSales += 1
     lot.reputation = math.min(100, lot.reputation + 0.15)
+    if not lot.receipts then lot.receipts = {} end
+    table.insert(lot.receipts, 1, {
+        name = product.name, price = price,
+        margin = math.floor(price - historicalCost + 0.5),
+    })
+    if #lot.receipts > 5 then table.remove(lot.receipts) end
     Population.FinishPurchase(population, person, price)
     refreshShelf(lot)
+    message(Players:GetPlayerByUserId(lot.ownerId),
+        "VENDA REALIZADA: " .. product.name .. "  +$" .. price)
     return true
 end
 
