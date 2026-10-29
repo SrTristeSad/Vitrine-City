@@ -11,6 +11,7 @@ return {
     DailyRent = 60,
     EmployeeHireCost = 130,
     EmployeeWage = 25,
+    WorkerCycleSeconds = 11, -- cada repositor atende uma gôndola por viagem
     EconomicDaySeconds = 90,
     ShipmentSeconds = 65,
     MarketEventEveryDays = 2, -- notícia nova a cada dois ciclos econômicos
