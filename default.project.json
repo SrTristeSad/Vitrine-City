@@ -1,0 +1,21 @@
+{
+  "name": "VitrineCity",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Shared": { "$path": "src/ReplicatedStorage/Shared" }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "VitrineServer": { "$path": "src/ServerScriptService/VitrineServer.server.luau" }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "VitrineClient": { "$path": "src/StarterPlayer/StarterPlayerScripts/VitrineClient.client.luau" }
+      }
+    }
+  }
+}
