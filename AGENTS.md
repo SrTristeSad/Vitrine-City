@@ -24,6 +24,8 @@ Jogo Roblox **original** em Luau. Uma rua comercial multiplayer com locação de
 18. Otimizar HUD: não recriar todos os cartões quando o inventário não mudou. Evitar luzes dinâmicas e criação contínua de Parts nos ciclos de clientes.
 19. Relatório da loja mede apenas visitas concluídas e validação de vendas no servidor. Uma visita cancelada por troca de dono ou rodada não deve aparecer no histórico do novo proprietário.
 20. O painel v0.7 mostra diagnóstico de perda e ledger sem equiparar lucro bruto a lucro líquido. KPIs de lojas salvos devem ser sanitizados. Rodar testes/analytics.spec.luau no CI.
+21. O layout visual fica isolado em StoreVisuals.luau. Não confundir itens cenográficos das vitrines com mercadorias vendáveis; gôndolas reagem ao estoque real e etiquetas aos preços.
+22. Preservar corredor central e entrada com passagem sem colisão, prompt de aluguel junto à fachada e nomes dos lotes. Ver docs/REFORMA_VISUAL_LOJAS.md.
 
 ## Estrutura
 - `src/ReplicatedStorage/Shared`: Config, Catalog, Economy, Population.
@@ -32,7 +34,7 @@ Jogo Roblox **original** em Luau. Uma rua comercial multiplayer com locação de
 - `docs`: GDD, economia, monetização, testes.
 
 ## Próximo trabalho
-O lobby, os quatro Places e o **matchmaking global beta** já estão codificados. Prioridade: configurar os PlaceIds reais no ModeRoutes, publicar em experiência de teste e validar teleportes no cliente Roblox, além de corrigir erros reais do Studio e verificar DataStore. Depois, validar a compra/visita e o relatório no Studio/Android, o salvamento de KPIs em ambiente publicado, além do matchmaking global com vários servidores e reconexão. Não adicionar seis modos superficiais antes de estabilizar o principal.
+O lobby, os quatro Places e o **matchmaking global beta** já estão codificados. Prioridade: configurar os PlaceIds reais no ModeRoutes, publicar em experiência de teste e validar teleportes no cliente Roblox, além de corrigir erros reais do Studio e verificar DataStore. Depois, validar no Roblox Studio a nova fachada/porta/corredores, aluguel, NPCs, compra/visita e relatório no Android, além do DataStore e matchmaking publicados. Não adicionar seis modos superficiais antes de estabilizar o principal.
 
 ## Padrão de entrega
 Em cada alteração: resumo do comportamento, arquivos alterados, testes efetivamente rodados e limitações. Proteger eventos remotos contra dados falsificados e compras duplicadas. Documentar qualquer mudança de configuração econômica em `docs/ECONOMIA.md`.
