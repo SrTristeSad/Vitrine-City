@@ -12,6 +12,16 @@ assert tree["ReplicatedStorage"]["Shared"]["$path"] == "src/ReplicatedStorage/Sh
 assert tree["ServerScriptService"]["VitrineServer"]["$path"].endswith(".server.luau")
 assert tree["ServerScriptService"]["ProfileStore"]["$path"].endswith("ProfileStore.luau")
 assert tree["StarterPlayer"]["StarterPlayerScripts"]["VitrineClient"]["$path"].endswith(".client.luau")
+for path in ("lobby.project.json", "ranked.project.json", "price_war.project.json"):
+    extra = json.loads((root / path).read_text(encoding="utf-8"))
+    assert extra["tree"]["$className"] == "DataModel", path
+    assert "ReplicatedStorage" in extra["tree"] and "ServerScriptService" in extra["tree"], path
+assert json.loads((root / "lobby.project.json").read_text(encoding="utf-8"))["tree"]["ReplicatedStorage"]["ModeRoutes"]["$path"].endswith("ModeRoutes.luau")
+for path, suffix in (("ranked.project.json", "Ranked.luau"), ("price_war.project.json", "PriceWar.luau")):
+    shared = json.loads((root / path).read_text(encoding="utf-8"))["tree"]["ReplicatedStorage"]["Shared"]
+    assert shared["Config"]["$path"].endswith(suffix)
+    assert shared["BaseConfig"]["$path"].endswith("Shared/Config.luau")
+
 
 sources = [
     "src/ReplicatedStorage/Shared/Config.luau",
@@ -20,6 +30,11 @@ sources = [
     "src/ReplicatedStorage/Shared/Population.luau",
     "src/ServerScriptService/VitrineServer.server.luau",
     "src/ServerScriptService/ProfileStore.luau",
+    "src/ServerScriptService/LobbyServer.server.luau",
+    "src/StarterPlayer/StarterPlayerScripts/LobbyClient.client.luau",
+    "src/ReplicatedStorage/ModeRoutes.luau",
+    "src/ReplicatedStorage/Shared/Configs/Ranked.luau",
+    "src/ReplicatedStorage/Shared/Configs/PriceWar.luau",
     "src/StarterPlayer/StarterPlayerScripts/VitrineClient.client.luau",
 ]
 for source in sources:
@@ -56,5 +71,16 @@ assert "ProfileStore" in profiles and "UpdateAsync" in profiles
 assert "RunService:IsStudio()" in profiles and "Config.StudioPersistence" in profiles
 assert "Config.AutosaveSeconds" in server
 assert "state.loadError" in client and "state.persistence" in client
-print("PASS: Rojo mappings, module references, six unique items and basic economy invariants.")
+lobby_server = (root / "src/ServerScriptService/LobbyServer.server.luau").read_text(encoding="utf-8")
+lobby_client = (root / "src/StarterPlayer/StarterPlayerScripts/LobbyClient.client.luau").read_text(encoding="utf-8")
+assert 'TeleportService:TeleportAsync' in lobby_server
+assert 'ReservedServerId' in lobby_server
+assert 'TeleportInitFailed' in lobby_server
+assert 'RunService:IsStudio()' in lobby_server
+assert 'SetAttribute("Action"' in lobby_client
+assert 'ModeRoutes' in lobby_server
+assert 'cfg.Mode = "ranked"' in (root / "src/ReplicatedStorage/Shared/Configs/Ranked.luau").read_text(encoding="utf-8")
+assert 'cfg.Mode = "price_war"' in (root / "src/ReplicatedStorage/Shared/Configs/PriceWar.luau").read_text(encoding="utf-8")
+
+print("PASS: four Rojo projects, modules, lobby routes and basic economy invariants.")
 print("NOTE: CI compiles Luau separately; Roblox Studio runtime / DataStore integration tests still required.")
