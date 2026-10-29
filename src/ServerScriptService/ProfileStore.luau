@@ -65,7 +65,7 @@ function ProfileStore.Load(userId, catalog)
             return store:UpdateAsync(key, function(old)
                 if old ~= nil and typeof(old) ~= "table" then rejected = "invalid"; return nil end
                 if old and old.schema ~= VERSION then rejected = "schema"; return nil end
-                if old and old.lease and old.lease.token ~= serverToken and
+                if old and typeof(old.lease) == "table" and old.lease.token ~= serverToken and
                     typeof(old.lease.expires) == "number" and old.lease.expires > now then
                     rejected = "locked"
                     return nil
