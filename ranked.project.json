@@ -20,6 +20,9 @@
         },
         "Population": {
           "$path": "src/ReplicatedStorage/Shared/Population.luau"
+        },
+        "MarketEvents": {
+          "$path": "src/ReplicatedStorage/Shared/MarketEvents.luau"
         }
       },
       "ModeRoutes": {
