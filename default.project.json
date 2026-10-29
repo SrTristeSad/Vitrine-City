@@ -8,7 +8,8 @@
     },
     "ServerScriptService": {
       "$className": "ServerScriptService",
-      "VitrineServer": { "$path": "src/ServerScriptService/VitrineServer.server.luau" }
+      "VitrineServer": { "$path": "src/ServerScriptService/VitrineServer.server.luau" },
+      "ProfileStore": { "$path": "src/ServerScriptService/ProfileStore.luau" }
     },
     "StarterPlayer": {
       "$className": "StarterPlayer",
