@@ -22,7 +22,7 @@ end
 local actionEvent, stateEvent, noticeEvent = remote("Action"), remote("State"), remote("Notice")
 
 local queue = { ranked = {}, price_war = {} }
-local queuedMode, inFlight, lastRequest = {}, {}, {}
+local queuedMode, inFlight, lastRequest, inFlightAt = {}, {}, {}, {}
 local countdownAt = {}
 local lobby = Instance.new("Folder")
 lobby.Name = "VitrineCityLobbyMap"
@@ -141,6 +141,7 @@ local function teleportGroup(mode, players)
 
     for _, player in ipairs(players) do
         inFlight[player.UserId] = mode
+        inFlightAt[player.UserId] = os.clock()
         queuedMode[player.UserId] = nil
     end
     local options = Instance.new("TeleportOptions")
@@ -157,6 +158,7 @@ local function teleportGroup(mode, players)
         for _, player in ipairs(players) do
             if inFlight[player.UserId] == mode then
                 inFlight[player.UserId] = nil
+                inFlightAt[player.UserId] = nil
                 notify(player, "Não foi possível entrar na partida. Tente novamente.")
                 if mode ~= "normal" then requeue(player, mode) end
             end
@@ -167,7 +169,8 @@ local function teleportGroup(mode, players)
 end
 
 local function joinMode(player, mode)
-    if typeof(mode) ~= "string" or not Routes[mode] then return end
+    if mode ~= "normal" and mode ~= "ranked" and mode ~= "price_war" then return end
+    if not Routes[mode] then return end
     if queuedMode[player.UserId] or inFlight[player.UserId] then return end
     if not prepared(mode) then notify(player, "Esse modo ainda não tem um Place publicado/configurado."); return end
     if mode == "normal" then
@@ -231,6 +234,7 @@ TeleportService.TeleportInitFailed:Connect(function(player, teleportResult, erro
     local mode = inFlight[player.UserId]
     if not mode then return end
     inFlight[player.UserId] = nil
+    inFlightAt[player.UserId] = nil
     warn("Vitrine City: TeleportInitFailed: " .. tostring(teleportResult) .. " / " .. tostring(errorMessage))
     notify(player, "Falha no teleporte. Você continua no lobby.")
     if mode ~= "normal" then requeue(player, mode) end
@@ -241,6 +245,7 @@ Players.PlayerAdded:Connect(function(player) task.defer(sendState, player) end)
 Players.PlayerRemoving:Connect(function(player)
     removeFromQueue(player)
     inFlight[player.UserId] = nil
+    inFlightAt[player.UserId] = nil
     lastRequest[player.UserId] = nil
     broadcast()
 end)
@@ -249,6 +254,18 @@ for _, p in ipairs(Players:GetPlayers()) do task.defer(sendState, p) end
 task.spawn(function()
     while true do
         task.wait(1)
+        -- Evitar jogador preso no estado de teleporte após uma falha sem evento.
+        for userId, beganAt in pairs(inFlightAt) do
+            if os.clock() - beganAt >= 50 then
+                local player = Players:GetPlayerByUserId(userId)
+                local mode = inFlight[userId]
+                inFlightAt[userId], inFlight[userId] = nil, nil
+                if player and player.Parent == Players then
+                    notify(player, "A entrada demorou demais; tente novamente.")
+                    -- Não recolocar na fila automaticamente: o jogador escolhe o momento de tentar.
+                end
+            end
+        end
         for _, mode in ipairs({ "ranked", "price_war" }) do
             cleanQueue(mode)
             local cfg = Routes[mode]
