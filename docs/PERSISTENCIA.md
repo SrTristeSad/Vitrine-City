@@ -2,7 +2,8 @@
 
 ## Dados salvos
 - Saldo, vendas, despesas, receitas e penalidades.
-- Depósito, prateleiras, preços, custo do estoque, reputação e contratação de repositor.
+- Depósito, prateleiras, preços, custo do estoque, reputação, contratação de repositor e estatísticas de visitas/vendas da loja (a partir da v0.7).
+- Livro de despesas por categoria (aluguéis, salários, contratação, custo das mercadorias vendidas e baixas de estoque), acrescentado na v0.7. Valores históricos anteriores não podem ser detalhados retroativamente.
 - O lote físico não é reservado entre servidores: após reconectar, o jogador escolhe uma loja vaga para recuperar o estoque sem pagar outra taxa inicial.
 
 ## Arquitetura
