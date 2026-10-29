@@ -8,6 +8,7 @@ local remotes = ReplicatedStorage:WaitForChild("VitrineRemotes")
 local actionEvent = remotes:WaitForChild("Action")
 local stateEvent = remotes:WaitForChild("State")
 local noticeEvent = remotes:WaitForChild("Notice")
+local openShopEvent = remotes:WaitForChild("OpenShop")
 
 local C = {
     bg = Color3.fromRGB(15, 26, 39),
@@ -444,6 +445,18 @@ local function render(state)
         if scroll.Parent then scroll.CanvasPosition = Vector2.new(0, savedY) end
     end)
 end
+
+openShopEvent.OnClientEvent:Connect(function()
+    opened = true
+    panel.Visible = true
+    toggle.Text = "FECHAR X"
+    showReport = false
+    lastInventorySignature = nil
+    scroll.CanvasPosition = Vector2.new(0, 0)
+    if latest and not latest.loadError then
+        render(latest)
+    end
+end)
 
 reportButton.MouseButton1Click:Connect(function()
     showReport = not showReport
