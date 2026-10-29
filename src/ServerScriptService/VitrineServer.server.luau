@@ -15,6 +15,7 @@ local Population = require(Shared:WaitForChild("Population"))
 local MarketEvents = require(Shared:WaitForChild("MarketEvents"))
 local ShopAnalytics = require(Shared:WaitForChild("ShopAnalytics"))
 local CustomerRoute = require(Shared:WaitForChild("CustomerRoute"))
+local CustomerMotion = require(Shared:WaitForChild("CustomerMotion"))
 local ProfileStore = require(script.Parent:WaitForChild("ProfileStore"))
 local StoreVisuals = require(script.Parent:WaitForChild("StoreVisuals"))
 local Routes = require(ReplicatedStorage:WaitForChild("ModeRoutes"))
@@ -221,22 +222,49 @@ end
 
 local function moveNpc(model, x, z, seconds)
     if not model.Parent then return end
-    local current = model:GetPivot().Position
+    local begin = model:GetPivot()
+    local initial = begin.Position
     local destination = Vector3.new(x, 3, z)
+    local direction = Vector3.new(destination.X - initial.X, 0, destination.Z - initial.Z)
+    local distance = CustomerMotion.StepDistance(initial.X, initial.Z, x, z)
+
+    if distance <= 0.01 then return end
+    -- O cliente vira primeiro e caminha voltado para a direção do corredor.
+    local startFacing = CFrame.lookAt(initial, initial + direction)
+    local endFacing = CFrame.lookAt(destination, destination + direction)
+    model:PivotTo(startFacing)
+
+    local leftLeg = model:FindFirstChild("Perna E")
+    local rightLeg = model:FindFirstChild("Perna D")
+    local leftArm = model:FindFirstChild("Braço E")
+    local rightArm = model:FindFirstChild("Braço D")
+    local walked = model:GetAttribute("Walked") or 0
     local driver = Instance.new("CFrameValue")
-    driver.Value = model:GetPivot()
-    local conn = driver.Changed:Connect(function(value)
-        if model.Parent then model:PivotTo(value) end
+    driver.Value = startFacing
+
+    local connection = driver.Changed:Connect(function(frame)
+        if not model.Parent then return end
+        model:PivotTo(frame)
+        -- A pose das pernas/braços acompanha a translação já interpolada.
+        -- Nenhum Motor6D, física ou loop extra por NPC.
+        local dx = frame.Position.X - initial.X
+        local dz = frame.Position.Z - initial.Z
+        local phase = CustomerMotion.Stride(walked + math.sqrt(dx * dx + dz * dz))
+        if leftLeg then leftLeg.CFrame = frame * CFrame.new(-0.5, -1.7, 0) * CFrame.Angles(phase, 0, 0) end
+        if rightLeg then rightLeg.CFrame = frame * CFrame.new(0.5, -1.7, 0) * CFrame.Angles(-phase, 0, 0) end
+        if leftArm then leftArm.CFrame = frame * CFrame.new(-1.28, 0, 0) * CFrame.Angles(-phase * 0.55, 0, 0) end
+        if rightArm then rightArm.CFrame = frame * CFrame.new(1.28, 0, 0) * CFrame.Angles(phase * 0.55, 0, 0) end
     end)
-    local distance = (Vector3.new(current.X, 0, current.Z) - Vector3.new(x, 0, z)).Magnitude
-    local facing = distance > 0.01 and CFrame.lookAt(destination,
-        destination + Vector3.new(x - current.X, 0, z - current.Z)) or driver.Value
     local tween = TweenService:Create(driver, TweenInfo.new(math.max(0.05, seconds), Enum.EasingStyle.Linear),
-        { Value = facing })
+        { Value = endFacing })
     tween:Play()
     tween.Completed:Wait()
-    conn:Disconnect()
+    connection:Disconnect()
     driver:Destroy()
+    if model.Parent then
+        model:SetAttribute("Walked", walked + distance)
+        model:PivotTo(endFacing)
+    end
 end
 
 local function followRoute(model, steps)
