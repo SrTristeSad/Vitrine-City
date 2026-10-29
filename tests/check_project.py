@@ -29,6 +29,7 @@ sources = [
     "src/ReplicatedStorage/Shared/Config.luau",
     "src/ReplicatedStorage/Shared/Catalog.luau",
     "src/ReplicatedStorage/Shared/MarketEvents.luau",
+    "src/ReplicatedStorage/Shared/ShopAnalytics.luau",
     "src/ReplicatedStorage/Shared/Economy.luau",
     "src/ReplicatedStorage/Shared/Population.luau",
     "src/ServerScriptService/VitrineServer.server.luau",
@@ -74,6 +75,19 @@ assert "ProfileStore.Load" in server and "ProfileStore.Save" in server and "Prof
 assert "ProfileStore" in profiles and "UpdateAsync" in profiles
 assert "RunService:IsStudio()" in profiles and "Config.StudioPersistence" in profiles
 assert "Config.AutosaveSeconds" in server
+analytics = (root / "src/ReplicatedStorage/Shared/ShopAnalytics.luau").read_text(encoding="utf-8")
+for name in ("New", "Restore", "BeginVisit", "RecordSale", "Reason", "RecordLost", "View"):
+    assert f"function ShopAnalytics.{name}" in analytics
+assert 'ShopAnalytics.BeginVisit' in server and 'ShopAnalytics.RecordLost' in server
+assert 'ShopAnalytics.RecordSale' in server and 'ShopAnalytics.View' in server
+assert 'lot.leaseVersion ~= expectedLease' in server
+assert 'target.leaseVersion == lease' in server
+assert 'account.ledger.cogs' in server and 'account.ledger.wages' in server
+assert 'account.ledger.lease' in server and 'account.ledger.writeoff' in server
+assert 'ShopAnalytics.Restore' in profiles and 'ledger = cleanLedger' in profiles
+assert 'showReport' in client and 'RELATÓRIO DA LOJA' in client
+assert 'Visitas concluídas:' in client and 'Conversão:' in client
+assert (root / "tests/analytics.spec.luau").exists()
 market_events = (root / "src/ReplicatedStorage/Shared/MarketEvents.luau").read_text(encoding="utf-8")
 assert "function MarketEvents.Next" in market_events
 assert "function MarketEvents.DemandFactor" in market_events
@@ -90,6 +104,7 @@ assert "fingerprint == lastInventorySignature" in client
 for config_path in ("ranked.project.json", "price_war.project.json"):
     project_data = json.loads((root / config_path).read_text(encoding="utf-8"))
     assert project_data["tree"]["ReplicatedStorage"]["Shared"]["MarketEvents"]["$path"].endswith("MarketEvents.luau")
+    assert project_data["tree"]["ReplicatedStorage"]["Shared"]["ShopAnalytics"]["$path"].endswith("ShopAnalytics.luau")
 assert "state.loadError" in client and "state.persistence" in client
 assert 'ReturnToLobby' in server and 'ReturnToLobby' in client
 assert 'ProfileStore.Save(userId, snapshot, Catalog)' in server
