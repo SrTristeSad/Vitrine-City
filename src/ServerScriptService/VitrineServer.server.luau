@@ -244,6 +244,7 @@ local function moveNpc(model, x, z, seconds)
     local leftArm = model:FindFirstChild("Braço E")
     local rightArm = model:FindFirstChild("Braço D")
     local walked = model:GetAttribute("Walked") or 0
+    local lastPose = -math.huge
     local driver = Instance.new("CFrameValue")
     driver.Value = startFacing
 
@@ -252,6 +253,9 @@ local function moveNpc(model, x, z, seconds)
         model:PivotTo(frame)
         -- A pose das pernas/braços acompanha a translação já interpolada.
         -- Nenhum Motor6D, física ou loop extra por NPC.
+        local now = os.clock()
+        if now - lastPose < 0.08 then return end -- membros no máximo 12,5 Hz por NPC
+        lastPose = now
         local dx = frame.Position.X - initial.X
         local dz = frame.Position.Z - initial.Z
         local phase = CustomerMotion.Stride(walked + math.sqrt(dx * dx + dz * dz))
