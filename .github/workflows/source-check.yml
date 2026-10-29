@@ -1,0 +1,15 @@
+name: Source checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  project-config:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Validate Rojo and source references
+        run: python3 tests/check_project.py
