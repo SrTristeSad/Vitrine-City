@@ -28,6 +28,7 @@ for path, suffix in (("ranked.project.json", "Ranked.luau"), ("price_war.project
 sources = [
     "src/ReplicatedStorage/Shared/Config.luau",
     "src/ReplicatedStorage/Shared/Catalog.luau",
+    "src/ReplicatedStorage/Shared/MarketEvents.luau",
     "src/ReplicatedStorage/Shared/Economy.luau",
     "src/ReplicatedStorage/Shared/Population.luau",
     "src/ServerScriptService/VitrineServer.server.luau",
@@ -73,6 +74,22 @@ assert "ProfileStore.Load" in server and "ProfileStore.Save" in server and "Prof
 assert "ProfileStore" in profiles and "UpdateAsync" in profiles
 assert "RunService:IsStudio()" in profiles and "Config.StudioPersistence" in profiles
 assert "Config.AutosaveSeconds" in server
+market_events = (root / "src/ReplicatedStorage/Shared/MarketEvents.luau").read_text(encoding="utf-8")
+assert "function MarketEvents.Next" in market_events
+assert "function MarketEvents.DemandFactor" in market_events
+assert "function MarketEvents.SupplyFactor" in market_events
+assert market_events.count('        id = "') == 5
+assert "MarketEvents.DemandFactor" in economy
+assert "economy.NewNeed(catalog, rng, event, marketEvents)" in population
+assert "MarketEvents.Next" in server and "MarketEvents.SupplyFactor" in server
+assert "Population.StartPurchase(population, Catalog, Economy, rng, marketEvent, MarketEvents)" in server
+assert "marketBoardText" in server and "market = {" in server
+assert "Sacola de compras" in server and 'StatusCliente' in server
+assert "lastInventorySignature" in client and "marketNews" in client
+assert "fingerprint == lastInventorySignature" in client
+for config_path in ("ranked.project.json", "price_war.project.json"):
+    project_data = json.loads((root / config_path).read_text(encoding="utf-8"))
+    assert project_data["tree"]["ReplicatedStorage"]["Shared"]["MarketEvents"]["$path"].endswith("MarketEvents.luau")
 assert "state.loadError" in client and "state.persistence" in client
 assert 'ReturnToLobby' in server and 'ReturnToLobby' in client
 assert 'ProfileStore.Save(userId, snapshot, Catalog)' in server
