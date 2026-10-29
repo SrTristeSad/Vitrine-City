@@ -69,6 +69,33 @@ toggle.Position = UDim2.new(1, -12, 0, 12)
 toggle.Size = UDim2.fromOffset(138, 43)
 toggle.TextSize = 14
 
+local exitArmed = false
+local exitTicket = 0
+local returnButton = button(gui, "LOBBY OFF", C.slate, function()
+    if not exitArmed then
+        exitArmed = true
+        exitTicket += 1
+        local ticket = exitTicket
+        returnButton.Text = "CONFIRMAR SAÍDA"
+        task.delay(5, function()
+            if exitTicket == ticket and returnButton.Parent then
+                exitArmed = false
+                returnButton.Text = "VOLTAR AO LOBBY"
+            end
+        end)
+    else
+        exitArmed = false
+        exitTicket += 1
+        returnButton.Text = "CONECTANDO..."
+        fire("ReturnToLobby")
+    end
+end)
+returnButton.AnchorPoint = Vector2.new(0, 0)
+returnButton.Position = UDim2.fromOffset(12, 12)
+returnButton.Size = UDim2.fromOffset(158, 43)
+returnButton.TextSize = 12
+returnButton.Active = false
+
 local panel = Instance.new("Frame")
 panel.Name = "Painel Vitrine City"
 panel.AnchorPoint = Vector2.new(1, 0)
@@ -242,6 +269,14 @@ local function render(state)
         return
     end
     summary.TextColor3 = C.muted
+    returnButton.Active = state.lobbyConfigured == true and not state.returning
+    returnButton.AutoButtonColor = returnButton.Active
+    returnButton.BackgroundColor3 = returnButton.Active and C.blue or C.slate
+    if state.returning then
+        returnButton.Text = "CONECTANDO..."
+    elseif not exitArmed then
+        returnButton.Text = state.lobbyConfigured and "VOLTAR AO LOBBY" or "LOBBY OFF"
+    end
     local competitive = state.mode ~= "normal"
     heading.Text = "VITRINE CITY  |  " .. (state.mode == "normal" and "RUA LIVRE" or (state.mode == "price_war" and "GUERRA DE PREÇOS" or "GUERRA COMERCIAL"))
     heading.TextSize = compact and 16 or 19
