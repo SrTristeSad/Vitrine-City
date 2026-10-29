@@ -2,13 +2,17 @@
 -- Núcleo de decisões isolado do mapa / interface.
 local Economy = {}
 
-function Economy.NewNeed(catalog, rng)
+function Economy.NewNeed(catalog, rng, event, marketEvents)
     local total = 0
-    for _, p in ipairs(catalog.List) do total += p.weight end
+    for _, p in ipairs(catalog.List) do
+        local demand = marketEvents and marketEvents.DemandFactor(event, p.category) or 1
+        total += p.weight * demand
+    end
     local roll = rng:NextNumber(0, total)
     local picked = catalog.List[#catalog.List]
     for _, p in ipairs(catalog.List) do
-        roll -= p.weight
+        local demand = marketEvents and marketEvents.DemandFactor(event, p.category) or 1
+        roll -= p.weight * demand
         if roll <= 0 then picked = p; break end
     end
     local group = catalog.ByCategory[picked.category]
