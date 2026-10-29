@@ -1,0 +1,10 @@
+# Roblox / Rojo generated files
+*.rbxl
+*.rbxlx
+*.rbxm
+*.rbxmx
+*.rbxl.lock
+.DS_Store
+Thumbs.db
+node_modules/
+.rojo/
