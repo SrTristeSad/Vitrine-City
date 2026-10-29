@@ -29,6 +29,9 @@ Jogo Roblox **original** em Luau. Uma rua comercial multiplayer com locação de
 23. Clientes devem ir de calçada → porta → gôndola → caixa → saída, com percurso definido por CustomerRoute.luau; validar em ambos os lados da rua.
 24. Nunca creditar venda por animação; somente `sale()` valida orçamento, estoque e dono quando o NPC chega ao caixa.
 25. O prompt físico de gerenciamento na caixa só pode abrir o inventário para o proprietário, validado no servidor. Executar `tests/customer_route.spec.luau` no CI.
+26. ShopGuide é apenas leitura da situação comercial. Não entregar dinheiro nem mercadoria ao jogador para completar tutorial.
+27. O painel inicia fechado, abre no aluguel e continua acessível pelo botão/caixa. No celular, esconder guia quando o painel estiver visível.
+28. Venda bem-sucedida gera confirmação e recibo curto de sessão apenas após a validação server-side em sale(). Rodar `tests/shop_guide.spec.luau` na CI.
 
 ## Estrutura
 - `src/ReplicatedStorage/Shared`: Config, Catalog, Economy, Population.
