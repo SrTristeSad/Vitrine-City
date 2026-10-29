@@ -1,5 +1,8 @@
 # Roteiro de testes — pendente de execução no Studio
 
+## Primeira loja e confirmação de venda — v1.0-preview
+Abrir Rua Livre no Studio com painel inicialmente fechado; verificar guia, aluguel, compra de 5 unidades, reposição e primeira venda. Conferir confirmação monetária e cinco recibos no relatório, sem duplicar caixa ou vendas. Executar tests/shop_guide.spec.luau no CI; roteiro em docs/PRIMEIRA_LOJA.md.
+
 ## Clientes e caixa interativo — v0.9
 Executar o roteiro em docs/CLIENTES_E_CAIXA.md. Confirmar NPC andando pela entrada, gôndola e caixa em ambos os lados da rua. Validar visita sem compra, saída com sacola somente após venda e prompt da caixa limitado ao dono. Rodar testes/customer_route.spec.luau; medir impacto em Android.
 
