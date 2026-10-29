@@ -36,6 +36,7 @@ local function event(name)
     return remote
 end
 local actionEvent, stateEvent, noticeEvent = event("Action"), event("State"), event("Notice")
+local openShopEvent = event("OpenShop")
 
 local map = Instance.new("Folder")
 map.Name = "VitrineCityMap"
@@ -112,6 +113,9 @@ local function updateSign(lot)
         lot.statusLamp.Color = owner and Color3.fromRGB(83, 209, 139) or Color3.fromRGB(250, 194, 87)
     end
     lot.prompt.Enabled = owner == nil
+    if lot.managementPrompt then
+        lot.managementPrompt.Enabled = owner ~= nil
+    end
 end
 
 local function refreshShelf(lot)
@@ -149,9 +153,17 @@ local function makeMap()
             prompt.HoldDuration = 0.3
             prompt.KeyboardKeyCode = Enum.KeyCode.E
             prompt.Parent = door
+            local managementPrompt = Instance.new("ProximityPrompt")
+            managementPrompt.ActionText = "Administrar loja"
+            managementPrompt.ObjectText = "Caixa registradora"
+            managementPrompt.KeyboardKeyCode = Enum.KeyCode.E
+            managementPrompt.MaxActivationDistance = 9
+            managementPrompt.HoldDuration = 0.15
+            managementPrompt.Parent = shell.cashRegister
             local lot = {
                 id = id, x = x, z = z, side = side, model = model, door = door,
-                prompt = prompt, label = shell.signLabel, statusLamp = shell.statusLamp, theme = shell.theme,
+                prompt = prompt, managementPrompt = managementPrompt,
+                label = shell.signLabel, statusLamp = shell.statusLamp, theme = shell.theme,
                 ownerId = nil, employeeId = nil, employeeModel = nil,
                 leaseVersion = 0, analytics = ShopAnalytics.New(),
                 stock = {}, shelf = {}, prices = {}, costValue = {}, displays = {},
@@ -772,6 +784,18 @@ for _, lot in ipairs(lots) do
     lot.prompt.Triggered:Connect(function(player)
         rent(player, lot)
         pushState()
+    end)
+    lot.managementPrompt.Triggered:Connect(function(player)
+        local userId = player.UserId
+        if lot.ownerId ~= userId then
+            message(player, "O caixa só pode ser administrado pelo proprietário desta loja.")
+            return
+        end
+        local character = player.Character
+        local root = character and character:FindFirstChild("HumanoidRootPart")
+        if not root or (root.Position - lot.managementPrompt.Parent.Position).Magnitude > 12 then return end
+        openShopEvent:FireClient(player)
+        sendState(player)
     end)
 end
 
