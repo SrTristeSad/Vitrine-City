@@ -369,11 +369,6 @@ local function settleBids(product)
         if a.premium ~= b.premium then return a.premium > b.premium end
         return a.sequence < b.sequence
     end)
-    for i = #bids, 1, -1 do
-        -- Índices invertidos para permitir remover sem ignorar contratos.
-        local bid = bids[i]
-        -- A classificação será percorrida da frente em uma segunda etapa abaixo.
-    end
     local index = 1
     while index <= #bids do
         local bid = bids[index]
@@ -632,18 +627,9 @@ task.spawn(function()
             if Config.Mode == "price_war" and elapsedRound >= Config.WarGraceSeconds then
                 local active, participated = 0, 0
                 for _, account in pairs(accounts) do
-                    if account.everRented then
-                        participated += 1
-                        if not account.eliminated and getLot((function()
-                            -- A conta sem userId não é consultada aqui; filtrar no loop abaixo.
-                            return 0
-                        end)()) then
-                            active += 1
-                        end
-                    end
+                    if account.everRented then participated += 1 end
                 end
                 -- Contar apenas proprietários ainda solventes.
-                active = 0
                 for _, lot in ipairs(lots) do
                     if lot.ownerId and accounts[lot.ownerId] and not accounts[lot.ownerId].eliminated then
                         active += 1
