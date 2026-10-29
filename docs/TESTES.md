@@ -29,6 +29,9 @@ Ver `docs/MODOS_LOBBY.md`. Abrir os quatro arquivos compilados no Studio, confer
 ## Retorno seguro ao lobby
 Validar em jogo publicado: botão de confirmação, PlaceId do Lobby, retorno da Rua Livre com save imediatamente anterior à saída, falha de DataStore impedindo o teleporte, falha de teleporte liberando a UI e abandono de partida competitiva sem transferir dinheiro. Conferir `docs/MODOS_LOBBY.md`.
 
+## Relatórios comerciais — v0.7
+Executar testes/analytics.spec.luau no CI e verificar em Studio: venda e compra perdida por cliente, conversão correta, categorias procuradas, atualização sem recriar cartões, troca de dono no trajeto, razão de preço fora do orçamento, depósito cheio com prateleira vazia e persistência após reconectar. Documentar evidência em docs/RELATORIOS_COMERCIAIS.md.
+
 ## Economia viva e visualização — v0.6
 Consultar `docs/EVENTOS_MERCADO.md`. Confirmar notícias atualizadas a cada dois dias econômicos, distribuição da demanda, remessas menores de queijo na escassez, mercadorias não confiscadas, sacola após compra validada, três peças por item e ausência de criação contínua de Parts. Verificar FPS no Android e atualização de interface sem flicker.
 
