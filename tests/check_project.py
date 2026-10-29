@@ -79,7 +79,7 @@ assert "function MarketEvents.Next" in market_events
 assert "function MarketEvents.DemandFactor" in market_events
 assert "function MarketEvents.SupplyFactor" in market_events
 assert market_events.count('        id = "') == 5
-assert "MarketEvents.DemandFactor" in economy
+assert "marketEvents.DemandFactor" in economy
 assert "economy.NewNeed(catalog, rng, event, marketEvents)" in population
 assert "MarketEvents.Next" in server and "MarketEvents.SupplyFactor" in server
 assert "Population.StartPurchase(population, Catalog, Economy, rng, marketEvent, MarketEvents)" in server
