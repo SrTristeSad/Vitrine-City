@@ -8,6 +8,9 @@ end
 for _, side in ipairs({ -1, 1 }) do
     local lot = { x = 22, z = 43 * side, side = side }
     local facade = lot.z - side * 15
+    local homeX, homeZ = Route.StaffHome(lot)
+    assert(near(homeX, lot.x + 6.8), "caixa do repositor")
+    assert(near(homeZ, facade + side * 6.0), "ponto de partida do repositor")
     for idx = 1, 6 do
         local shelfX, shelfZ = Route.ShelfPosition(lot, idx)
         assert(near(math.abs(shelfX - lot.x), 6.8), "corredor interno")
@@ -22,6 +25,14 @@ for _, side in ipairs({ -1, 1 }) do
         assert(near(approach[5].x, shelfX) and near(approach[5].z, shelfZ), "gôndola correta")
         assert(approach[5].hold > 0, "cliente observa produto")
 
+        local workerRoute = Route.StaffToShelf(lot, idx)
+        assert(#workerRoute == 3, "o funcionário usa corredor e gôndola")
+        assert(near(workerRoute[1].x, lot.x) and near(workerRoute[1].z, homeZ))
+        assert(near(workerRoute[3].x, shelfX) and near(workerRoute[3].z, shelfZ))
+        assert(workerRoute[3].hold > 0, "funcionário para na prateleira")
+        local returnRoute = Route.StaffReturn(lot, idx)
+        assert(#returnRoute == 3, "retorna para o caixa")
+        assert(near(returnRoute[3].x, homeX) and near(returnRoute[3].z, homeZ))
         local checkout = Route.Checkout(lot, idx)
         assert(#checkout == 3, "deve passar pelo corredor até o caixa")
         assert(near(checkout[1].x, lot.x) and near(checkout[1].z, shelfZ), "retorna ao corredor")
