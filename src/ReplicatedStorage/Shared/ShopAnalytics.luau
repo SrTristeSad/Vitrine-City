@@ -17,6 +17,11 @@ local function count(value)
     return math.clamp(math.floor(value + 0.5), 0, MAX)
 end
 
+local function field(source, key)
+    if typeof(source) == "table" then return source[key] end
+    return nil
+end
+
 function ShopAnalytics.New()
     return {
         visits = 0, sales = 0, lost = 0, salesValue = 0, cogs = 0,
@@ -34,14 +39,14 @@ function ShopAnalytics.Restore(raw, catalog)
         stats[key] = count(raw[key])
     end
     for reason in pairs(stats.reasons) do
-        stats.reasons[reason] = count(raw.reasons and raw.reasons[reason])
+        stats.reasons[reason] = count(field(raw.reasons, reason))
     end
     for category in pairs(catalog.ByCategory) do
-        stats.demand[category] = count(raw.demand and raw.demand[category])
+        stats.demand[category] = count(field(raw.demand, category))
     end
     for _, p in ipairs(catalog.List) do
-        stats.units[p.id] = count(raw.units and raw.units[p.id])
-        stats.productRevenue[p.id] = count(raw.productRevenue and raw.productRevenue[p.id])
+        stats.units[p.id] = count(field(raw.units, p.id))
+        stats.productRevenue[p.id] = count(field(raw.productRevenue, p.id))
     end
     return stats
 end
