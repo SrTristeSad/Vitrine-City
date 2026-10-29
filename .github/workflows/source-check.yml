@@ -41,6 +41,10 @@ jobs:
         run: |
           cd tests
           /tmp/luau-cli/luau shop_guide.spec.luau
+      - name: Test customer walking motion
+        run: |
+          cd tests
+          /tmp/luau-cli/luau customer_motion.spec.luau
       - name: Build all Roblox places
         run: |
           mkdir -p dist
