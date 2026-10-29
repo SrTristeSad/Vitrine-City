@@ -4,6 +4,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
@@ -14,6 +15,8 @@ local ProfileStore = require(script.Parent:WaitForChild("ProfileStore"))
 local rng = Random.new()
 local population = Population.Create(Config.VirtualResidents, rng)
 local competitive = Config.Mode ~= "normal"
+local validCompetitiveServer = not competitive or RunService:IsStudio()
+    or (game.PrivateServerId ~= "" and game.PrivateServerOwnerId == 0)
 
 local remotes = Instance.new("Folder")
 remotes.Name = "VitrineRemotes"
@@ -630,6 +633,11 @@ actionEvent.OnServerEvent:Connect(function(player, action, payload)
 end)
 
 local function join(player)
+    if not validCompetitiveServer then
+        warn("Vitrine City: recusando acesso direto ao competitivo fora de servidor reservado")
+        player:Kick("Entre nas partidas competitivas pelo lobby do Vitrine City.")
+        return
+    end
     local profile, mode
     if competitive then
         profile = {
