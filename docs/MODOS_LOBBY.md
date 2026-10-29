@@ -1,4 +1,4 @@
-# Lobby e separação de modos — Vitrine City v0.3
+# Lobby e separação de modos — Vitrine City v0.5
 
 ## Quatro Places dentro de UMA experiência Roblox
 | Ordem | Arquivo Rojo | Função |
@@ -21,10 +21,10 @@ Cada Place recebe um `.rbxlx` no artefato `VitrineCity-Places` do GitHub Actions
 
 ## Regras implementadas
 - Jogadores podem entrar na Rua Livre individualmente. Esse destino é um servidor público, sujeito a matchmaking padrão do Roblox.
-- Nas filas de Guerra Comercial e Guerra de Preços, aguardar ao menos dois jogadores e abrir partida até oito jogadores. Após atingir o mínimo, contagem regressiva de 12 segundos; atingir oito inicia imediatamente.
-- Para cada partida competitiva, o lobby cria um novo `ReservedServerId` e chama `TeleportAsync` com o lote de jogadores, de forma que a economia da partida não se misture a outras partidas.
+- No jogo publicado, as filas de Guerra Comercial e Guerra de Preços usam o MemoryStore para agrupar 2 a 8 jogadores de lobbies diferentes. No Studio, permanece o modo de fila local, com contagem de 12 segundos.
+- Cada partida competitiva recebe um `ReservedServerId` compartilhado pelos tickets selecionados. Os lobbies enviam seus próprios jogadores para esse mesmo servidor reservado, sem misturar as economias.
 - O servidor controla fila, cancelamento e teleporte. Clientes apenas solicitam ações, sem fornecer PlaceIds e sem enviar dinheiro.
-- Falhas síncronas de teleporte são tratadas com `pcall`; `TeleportInitFailed` reencaminha participantes de partidas para a fila local. Não há repetição infinita automática.
+- Falhas síncronas de teleporte e `TeleportInitFailed` têm tratamento. Na fila global, o jogador recebe aviso e pode solicitar nova entrada; não há reentrada automática infinita.
 - Fora do Studio, o Place competitivo rejeita acesso direto por servidor público. Somente sessões reservadas são aceitas.
 - A interface do lobby funciona em telas móveis e PC; há quiosques 3D com ProximityPrompts.
 
@@ -47,16 +47,16 @@ Cada Place recebe um `.rbxlx` no artefato `VitrineCity-Places` do GitHub Actions
 - [ ] Repetir testes em celular.
 
 ## Limitações conhecidas
-- **A fila é por servidor de lobby**, não global: jogadores em lobbies diferentes não serão combinados. Matchmaking global precisará de MemoryStore e algoritmo de coordenação.
+- O matchmaking global beta já está codificado com MemoryStore e tickets por sessão, mas ainda depende de testes em múltiplos servidores publicados. Ver `docs/MATCHMAKING_GLOBAL.md`.
 - O sistema não possui equipes, grupos de amigos, reconexão a partida nem preenchimento de vagas após início da rodada.
-- Se um membro falhar enquanto o grupo se teleporta, ele retorna à fila local, não à partida anterior.
+- Se um membro falhar no teleporte global, a reconexão à mesma partida ainda não é garantida; ele pode entrar novamente na fila.
 - É obrigatório configurar PlaceIds, publicar os Places e validar teleporte no Roblox real; builds Rojo e sintaxe Luau não provam o funcionamento em runtime.
 - A Guerra de Preços ainda precisa de balanceamento e testes de justiça, principalmente para início com atrasos de conexão.
 
 ## Testes pendentes
 - [ ] Quatro arquivos `.rbxlx` compilados e abertos no Studio sem erros.
 - [ ] UI responsiva em Android e PC.
-- [ ] Com dois jogadores: fila, cronômetro, servidor reservado e saldo inicial independente.
+- [ ] Com dois jogadores em lobbies publicados distintos: fila global, destino reservado comum e saldo independente. No Studio testar apenas fila local e cronômetro.
 - [ ] Com oito jogadores: partida cheia e sem jogador duplicado.
 - [ ] Cancelar fila / desconectar / falha de teleporte não deixam participantes presos.
 - [ ] Nenhum cliente altera reserva, saldo, estoque ou PlaceId.
