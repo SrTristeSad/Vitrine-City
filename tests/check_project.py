@@ -11,6 +11,7 @@ assert tree["$className"] == "DataModel"
 assert tree["ReplicatedStorage"]["Shared"]["$path"] == "src/ReplicatedStorage/Shared"
 assert tree["ServerScriptService"]["VitrineServer"]["$path"].endswith(".server.luau")
 assert tree["ServerScriptService"]["ProfileStore"]["$path"].endswith("ProfileStore.luau")
+assert tree["ServerScriptService"]["StoreVisuals"]["$path"].endswith("StoreVisuals.luau")
 assert tree["StarterPlayer"]["StarterPlayerScripts"]["VitrineClient"]["$path"].endswith(".client.luau")
 for path in ("lobby.project.json", "ranked.project.json", "price_war.project.json"):
     extra = json.loads((root / path).read_text(encoding="utf-8"))
@@ -34,6 +35,7 @@ sources = [
     "src/ReplicatedStorage/Shared/Population.luau",
     "src/ServerScriptService/VitrineServer.server.luau",
     "src/ServerScriptService/ProfileStore.luau",
+    "src/ServerScriptService/StoreVisuals.luau",
     "src/ServerScriptService/LobbyServer.server.luau",
     "src/ServerScriptService/GlobalMatchmaker.luau",
     "src/StarterPlayer/StarterPlayerScripts/LobbyClient.client.luau",
@@ -66,6 +68,24 @@ for remote in ("Action", "State", "Notice"):
     assert f'event("{remote}")' in server
     assert f'WaitForChild("{remote}")' in client
 
+# Cada modo comercial precisa incluir o mesmo kit visual. Lobby tem mapa separado.
+visuals = (root / "src/ServerScriptService/StoreVisuals.luau").read_text(encoding="utf-8")
+for path in ("ranked.project.json", "price_war.project.json"):
+    mode_tree = json.loads((root / path).read_text(encoding="utf-8"))["tree"]
+    assert mode_tree["ServerScriptService"]["StoreVisuals"]["$path"].endswith("StoreVisuals.luau")
+for feature in ('"Vidro da vitrine"', '"Porta de vidro"', '"Faixa do letreiro"',
+                '"Toldo da fachada"', '"Balcão de atendimento"', '"Etiqueta "',
+                '"Manequim torso"', '"Pedestal de vitrine"', '"Entrada pavimentada"'):
+    assert feature in visuals, f"Faltou estrutura comercial {feature}"
+assert "function StoreVisuals.BuildStreet" in visuals
+assert "function StoreVisuals.BuildStore" in visuals
+assert "function StoreVisuals.BuildShelf" in visuals
+assert 'StoreVisuals.BuildStreet(map, part)' in server
+assert 'StoreVisuals.BuildStore(model, id, x, z, side, part)' in server
+assert 'StoreVisuals.BuildShelf(lot.model, lot, product, idx, part)' in server
+assert "lot.prompt.Enabled = owner == nil" in server
+assert 'prompt.Parent = door' in server
+assert 'lot.statusLamp.Color' in server
 assert "Config.MaxVisibleCustomers" in server
 assert "person.wallet < price" in server
 assert "account.cash -= cost" in server
