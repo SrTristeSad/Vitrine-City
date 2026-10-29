@@ -15,7 +15,7 @@ local MATCH_TTL = 90
 local LOCK_SECONDS = 25
 local WAIT_LEASE_SECONDS = 50
 local POLL_SECONDS = 4
-local COORDINATE_SECONDS = 7
+local COORDINATE_SECONDS = 10
 local FLIGHT_TIMEOUT = 50
 local MODES = { "ranked", "price_war" }
 
@@ -149,7 +149,8 @@ function GlobalMatchmaker:_claim(mode, item, matchId)
     local ok = pcall(function()
         result = map:UpdateAsync(item.key, function(old, sortKey)
             if typeof(old) ~= "table" or old.nonce ~= item.value.nonce or
-                old.mode ~= mode or old.state ~= "waiting" or old.expiresAt <= now then
+                old.mode ~= mode or old.state ~= "waiting" or
+                typeof(old.expiresAt) ~= "number" or old.expiresAt <= now then
                 return nil
             end
             local updated = table.clone(old)
@@ -205,7 +206,7 @@ function GlobalMatchmaker:_coordinate(mode)
     local cfg = self.routes[mode]
     if not cfg or typeof(cfg.placeId) ~= "number" or cfg.placeId <= 0 then return end
     local ok, items = pcall(function()
-        return map:GetRangeAsync(Enum.SortDirection.Ascending, 60)
+        return map:GetRangeAsync(Enum.SortDirection.Ascending, 24)
     end)
     if not ok then
         warn("Vitrine City: MemoryStore GetRangeAsync falhou em " .. mode)
@@ -360,9 +361,10 @@ function GlobalMatchmaker:_runCoordinator()
     task.wait(math.random(1, 4))
     while true do
         for _, mode in ipairs(MODES) do
-            self:_coordinate(mode)
+            local ok, err = pcall(function() self:_coordinate(mode) end)
+            if not ok then warn("Vitrine City: coordenador global " .. mode .. ": " .. tostring(err)) end
         end
-        task.wait(COORDINATE_SECONDS + math.random())
+        task.wait(COORDINATE_SECONDS + math.random(0, 3))
     end
 end
 
