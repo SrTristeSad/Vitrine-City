@@ -8,9 +8,9 @@ Alugar ponto -> comprar estoque -> colocar na prateleira -> definir preço -> ob
 
 ## Lobby — v0.3
 - Três quiosques e interface de seleção de modos.
-- Fila competitiva local com 2 a 8 jogadores, contagem de 12 segundos e partidas reservadas independentes.
+- Matchmaking global beta usando MemoryStore para reunir 2 a 8 jogadores de vários lobbies, com tickets e claims atômicos; no Studio permanece a fila local de teste.
 - PlaceIds exigem configuração antes do lançamento. Teleporte ainda não testado em ambiente publicado.
-- Ver `docs/MODOS_LOBBY.md`.
+- Ver `docs/MODOS_LOBBY.md` e `docs/MATCHMAKING_GLOBAL.md`.
 
 ## Navegação de retorno — v0.4
 - Cada modo permite voltar ao lobby por botão com confirmação.
@@ -29,7 +29,7 @@ Alugar ponto -> comprar estoque -> colocar na prateleira -> definir preço -> ob
 - Estoque compartilhado dos fornecedores e entregas periódicas.
 - Contratos pré-pagos com prêmio de 0, 20, 40% que dão prioridade na remessa.
 - Fim por tempo: patrimônio líquido = caixa + estoque ao custo + valor reservado em contratos - penalidades.
-- Ainda sem matchmaking nem proteção contra entrada tardia.
+- Matchmaking distribuído beta implementado mas ainda sem validação multi-servidor, reconexão à partida ou proteção contra entrada tardia.
 
 ## Modo Guerra de Preços
 - Mesma competição de consumidores e fornecedores do ranqueado.
