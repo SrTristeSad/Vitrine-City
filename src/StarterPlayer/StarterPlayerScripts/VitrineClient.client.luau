@@ -125,10 +125,22 @@ marketNews.BackgroundColor3 = C.card
 marketNews.BackgroundTransparency = 0.25
 rounded(marketNews, 7)
 
+local reportButton = Instance.new("TextButton")
+reportButton.Name = "Alternar relatório"
+reportButton.Size = UDim2.fromOffset(180, 32)
+reportButton.Position = UDim2.fromOffset(0, 183)
+reportButton.BackgroundColor3 = C.amber
+reportButton.TextColor3 = C.bright
+reportButton.TextSize = 13
+reportButton.Font = Enum.Font.GothamBold
+reportButton.Text = "RELATÓRIO DA LOJA"
+reportButton.Parent = panel
+rounded(reportButton, 7)
+
 local scroll = Instance.new("ScrollingFrame")
 scroll.Name = "Inventário"
-scroll.Position = UDim2.fromOffset(0, 185)
-scroll.Size = UDim2.new(1, 0, 1, -189)
+scroll.Position = UDim2.fromOffset(0, 224)
+scroll.Size = UDim2.new(1, 0, 1, -228)
 scroll.BackgroundTransparency = 1
 scroll.BorderSizePixel = 0
 scroll.ScrollBarThickness = 5
@@ -154,6 +166,7 @@ rounded(notice, 9)
 local opened = true
 local latest = nil
 local lastInventorySignature = nil
+local showReport = false
 local compact = false
 local order = 0
 local function nextOrder(frame)
@@ -310,11 +323,13 @@ local function render(state)
         "\n" .. saveInfo ..
         (competitive and ("\nRodada " .. state.round .. "   |   " .. math.ceil(state.remaining / 60) .. " min restantes") or "")
 
-    -- Não destruir/recriar todos os cartões a cada 5 segundos quando nada mudou.
-    -- Economia/cronômetro/avisos continuam atualizados acima deste ponto.
+    reportButton.Text = showReport and "VOLTAR AO ESTOQUE" or "RELATÓRIO DA LOJA"
+    -- Os resumos econômicos são atualizados a cada pacote, mas cartões
+    -- e relatório só se recriam quando os dados relevantes forem alterados.
     local fingerprint = HttpService:JSONEncode({
         state.lot, state.hasEmployee, state.eliminated,
-        state.products, state.bids, state.ranking, competitive, compact,
+        state.products, state.bids, state.ranking, state.analytics, state.ledger,
+        competitive, compact, showReport,
     })
     if fingerprint == lastInventorySignature then return end
     lastInventorySignature = fingerprint
@@ -322,6 +337,85 @@ local function render(state)
     order = 0
     for _, child in ipairs(scroll:GetChildren()) do
         if child:IsA("GuiObject") then child:Destroy() end
+    end
+    if showReport then
+        local stats = state.analytics or {}
+        local ledger = state.ledger or {}
+        section("Vendas e desempenho")
+        nextOrder(text(scroll,
+            "Visitas concluídas: " .. (stats.visits or 0) ..
+            "  |  Compras: " .. (stats.sales or 0) ..
+            "  |  Sem compra: " .. (stats.lost or 0), 38, 12, C.muted))
+        nextOrder(text(scroll,
+            "Conversão: " .. (stats.conversion or 0) .. "%" ..
+            "  |  Receita bruta: $" .. (stats.revenue or 0) ..
+            "  |  Margem bruta: $" .. (stats.grossProfit or 0), 46, 12, C.green, true))
+
+        section("Por que os clientes saíram?")
+        local causes = stats.reasons or {}
+        local foundCause = false
+        for _, cause in ipairs(causes) do
+            if cause.count > 0 then
+                foundCause = true
+                nextOrder(text(scroll, cause.label .. ": " .. cause.count .. " visitas", 28, 12, C.muted))
+            end
+        end
+        if not foundCause then
+            nextOrder(text(scroll, "Ainda não há visitas perdidas para analisar.", 34, 12, C.muted))
+        end
+
+        section("Produtos procurados na sua loja")
+        local categories = stats.categories or {}
+        for _, item in ipairs(categories) do
+            if item.demand > 0 then
+                nextOrder(text(scroll, item.category .. ": " .. item.demand .. " visitas", 28, 12, C.muted))
+            end
+        end
+        if (stats.visits or 0) == 0 then
+            nextOrder(text(scroll, "Os dados aparecem quando um consumidor visita sua loja.", 40, 12, C.muted))
+        end
+
+        section("Vendas por mercadoria")
+        for _, item in ipairs(stats.products or {}) do
+            nextOrder(text(scroll,
+                item.name .. "  |  " .. item.units .. " un.  |  $" .. item.revenue,
+                28, 12, C.muted))
+        end
+
+        section("Despesas registradas")
+        nextOrder(text(scroll,
+            "Aluguel inicial: $" .. math.floor(ledger.lease or 0) ..
+            "  |  Aluguéis: $" .. math.floor(ledger.rent or 0), 32, 12, C.muted))
+        nextOrder(text(scroll,
+            "Salários: $" .. math.floor(ledger.wages or 0) ..
+            "  |  Contratação: $" .. math.floor(ledger.hire or 0), 32, 12, C.muted))
+        nextOrder(text(scroll,
+            "Mercadorias vendidas (custo): $" .. math.floor(ledger.cogs or 0), 32, 12, C.muted))
+        nextOrder(text(scroll,
+            "Perdas de estoque em fechamento: $" .. math.floor(ledger.writeoff or 0), 36, 12, C.muted))
+        nextOrder(text(scroll,
+            "Resultado acumulado do perfil: $" .. state.profit ..
+            ". Despesas antigas podem não estar detalhadas.", 52, 12, C.bright, true))
+
+        local top = causes[1]
+        if top and top.count > 0 then
+            section("Sugestão do mercado")
+            local advice = "Observe as mercadorias procuradas antes de comprar mais estoque."
+            if top.id == "shelf_empty" then
+                advice = "Clientes não encontraram produtos expostos. Compre estoque das categorias procuradas."
+            elseif top.id == "not_restocked" then
+                advice = "Você tinha mercadorias guardadas: reponha as prateleiras para não perder vendas."
+            elseif top.id == "too_expensive" then
+                advice = "Alguns consumidores não tinham orçamento para seus preços. Teste ofertas menores sem vender abaixo do custo."
+            elseif top.id == "price_changed" then
+                advice = "O preço mudou durante a visita. Evite alterar ofertas a todo instante."
+            end
+            nextOrder(text(scroll, advice, 78, 12, C.amber))
+        end
+        task.defer(function()
+            if scroll.Parent then scroll.CanvasPosition = Vector2.new(0, savedY) end
+        end)
+        return
     end
     if state.lot == 0 then
         section(state.eliminated and "Você está eliminado desta partida" or "Alugue uma loja para começar!")
@@ -351,5 +445,13 @@ local function render(state)
     end)
 end
 
+reportButton.MouseButton1Click:Connect(function()
+    showReport = not showReport
+    lastInventorySignature = nil
+    if latest then
+        scroll.CanvasPosition = Vector2.new(0, 0)
+        render(latest)
+    end
+end)
 stateEvent.OnClientEvent:Connect(render)
 fire("GetState")
