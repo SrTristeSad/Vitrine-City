@@ -25,10 +25,14 @@ jobs:
           curl -fLsS https://github.com/luau-lang/luau/releases/download/0.744/luau-ubuntu.zip -o /tmp/luau.zip
           mkdir -p /tmp/luau-cli
           unzip -q /tmp/luau.zip -d /tmp/luau-cli
-          chmod +x /tmp/luau-cli/luau-compile
+          chmod +x /tmp/luau-cli/luau-compile /tmp/luau-cli/luau
       - name: Check Luau syntax
         run: |
           find src -name '*.luau' -print0 | xargs -0 -n 1 /tmp/luau-cli/luau-compile >/dev/null
+      - name: Run economic analytics tests
+        run: |
+          cd tests
+          /tmp/luau-cli/luau analytics.spec.luau
       - name: Build all Roblox places
         run: |
           mkdir -p dist
