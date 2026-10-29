@@ -71,7 +71,9 @@ toggle.TextSize = 14
 
 local exitArmed = false
 local exitTicket = 0
-local returnButton = button(gui, "LOBBY OFF", C.slate, function()
+local returnButton
+returnButton = button(gui, "LOBBY OFF", C.slate, function()
+    if not returnButton.Active then return end
     if not exitArmed then
         exitArmed = true
         exitTicket += 1
