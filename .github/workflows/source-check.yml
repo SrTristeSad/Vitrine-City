@@ -45,6 +45,10 @@ jobs:
         run: |
           cd tests
           /tmp/luau-cli/luau customer_motion.spec.luau
+      - name: Test employee replenishment planner
+        run: |
+          cd tests
+          /tmp/luau-cli/luau worker_planner.spec.luau
       - name: Build all Roblox places
         run: |
           mkdir -p dist
