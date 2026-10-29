@@ -34,6 +34,9 @@ Jogo Roblox **original** em Luau. Uma rua comercial multiplayer com locação de
 28. Venda bem-sucedida gera confirmação e recibo curto de sessão apenas após a validação server-side em sale(). Rodar `tests/shop_guide.spec.luau` na CI.
 29. CustomerMotion implementa matemática de caminhada sem gerar humanoides extras; os membros usam no máximo 12,5 atualizações/s por NPC e retornam à pose neutra nas paradas.
 30. O indicador +$ no caixa é um único BillboardGui reutilizável por loja. Cada venda válida atualiza saldo e recibos imediatamente; troca de dono deve ocultar o indicador. Ver `docs/CLIENTES_MOVIMENTO_V11.md`.
+31. Repositor contratado caminha até a gôndola antes da função `restock` transferir estoque; não criar mercadoria, não repor várias gôndolas magicamente no mesmo ciclo.
+32. Controlar `lot.workerBusy`, identidade de funcionário, geração do aluguel e modo de retorno antes de alterar inventário. Executar `tests/worker_planner.spec.luau` e `tests/customer_route.spec.luau` no CI.
+33. A apresentação de produtos é low-poly, com formas por categoria e sem assets externos. Não aumentar peças sem medir FPS no Android. Ver `docs/REPOSITOR_V12.md`.
 
 ## Estrutura
 - `src/ReplicatedStorage/Shared`: Config, Catalog, Economy, Population.
