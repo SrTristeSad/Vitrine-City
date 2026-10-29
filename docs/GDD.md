@@ -9,7 +9,7 @@ Alugar ponto -> comprar estoque -> colocar na prateleira -> definir preço -> ob
 ## Modo normal — Rua Livre
 - Sem concorrência real pela mesma compra: consumidor procura primeiro um estabelecimento sorteado.
 - Atacado ilimitado, ritmo casual, fechamento com possibilidade de recomeço.
-- Nesta primeira versão, saldo é temporário; persistência e expansão serão adicionadas depois.
+- Na experiência publicada: DataStore mantém caixa, despesas, vendas, preços e estoque; após reconexão, o jogador escolhe um novo ponto e recupera o inventário sem pagar segunda taxa de abertura. Em Studio o progresso é temporário por padrão.
 
 ## Modo ranqueado — Guerra Comercial
 - NPC único compara ofertas de todas as lojas ativas do servidor.
@@ -39,14 +39,14 @@ Alugar ponto -> comprar estoque -> colocar na prateleira -> definir preço -> ob
 - Prateleira tem limite de 18 unidades por item.
 - Contabilidade reconhece estoque como ativo histórico e custo de mercadoria vendida na venda.
 - Contas: aluguel e folha salarial por ciclo; dois atrasos fecham a loja.
-- O aluguel inicial é pago imediatamente. Saldo e inventário não persistem.
+- O aluguel inicial é cobrado na primeira locação; não é cobrado uma segunda vez ao restaurar uma loja. Saldo e inventário persistem somente na Rua Livre publicada com DataStore acessível.
 
 ## Segurança e limites
 Servidor valida eventos, preço, estoque, dinheiro, posse da loja, quantidade e proposta de contratos. O cliente não envia valor final de caixa nem venda. NPCs são modelos geométricos simples, sem família física, casa, jornada de trabalho ou IA generativa. O protótipo **não foi testado em Roblox Studio**.
 
 ## Próximas entregas
 1. Playtest técnico Studio e mobile; telemetria de desempenho.
-2. Persistência segura, respawn e salvamento por usuário no normal.
+2. Testar persistência, falhas de rede e reconexão real; implementar recuperação de sessões travadas com observabilidade.
 3. Lobby e Places separados; matchmaking e isolamento de partidas.
 4. Negociação direta entre comerciantes com escrow bilateral seguro.
 5. Vitrines personalizadas, decoração, expansão de imóveis, identidade visual.
