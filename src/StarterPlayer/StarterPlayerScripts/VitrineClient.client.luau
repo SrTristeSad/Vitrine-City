@@ -371,7 +371,7 @@ local function render(state)
     -- Os resumos econômicos são atualizados a cada pacote, mas cartões
     -- e relatório só se recriam quando os dados relevantes forem alterados.
     local fingerprint = HttpService:JSONEncode({
-        state.lot, state.hasEmployee, state.eliminated,
+        state.lot, state.hasEmployee, state.workerBusy, state.workerProduct, state.eliminated,
         state.products, state.bids, state.ranking, state.analytics, state.ledger,
         state.recentSales,
         competitive, compact, showReport,
@@ -475,8 +475,14 @@ local function render(state)
         section(state.eliminated and "Você está eliminado desta partida" or "Alugue uma loja para começar!")
     else
         local employeeRow = nextOrder(horizontal(scroll, 0))
-        button(employeeRow, state.hasEmployee and "Repositor contratado" or "Contratar repositor $130", C.green,
-            function() fire("Hire") end).Size = UDim2.fromOffset(220, 32)
+        local caption = "Contratar repositor $130"
+        if state.hasEmployee then
+            caption = state.workerBusy and "Repositor abastecendo..." or "Repositor disponível"
+        end
+        local hireButton = button(employeeRow, caption, C.green,
+            function() if not state.hasEmployee then fire("Hire") end end)
+        hireButton.Size = UDim2.fromOffset(220, 32)
+        hireButton.Active = not state.hasEmployee
         section("Estoque e preços")
     end
     for _, product in ipairs(state.products) do addProduct(product, competitive) end
