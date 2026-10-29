@@ -694,16 +694,23 @@ Players.PlayerRemoving:Connect(leave)
 for _, player in ipairs(Players:GetPlayers()) do task.spawn(join, player) end
 
 game:BindToClose(function()
-    for _, player in ipairs(Players:GetPlayers()) do
-        task.spawn(leave, player)
+    local joined = Players:GetPlayers()
+    local pending = #joined
+    for _, player in ipairs(joined) do
+        task.spawn(function()
+            if not closing[player.UserId] then
+                leave(player)
+            else
+                while closing[player.UserId] do task.wait(0.1) end
+            end
+            pending -= 1
+        end)
     end
     local start = os.clock()
-    while os.clock() - start < 25 do
-        local busy = false
-        for _userId, _isClosing in pairs(closing) do busy = true; break end
-        if not busy then break end
+    while pending > 0 and os.clock() - start < 25 do
         task.wait(0.1)
     end
+    if pending > 0 then warn("Vitrine City: servidor fechando com saves ainda pendentes:", pending) end
 end)
 
 task.spawn(function()
