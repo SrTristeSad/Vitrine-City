@@ -15,6 +15,7 @@ local Population = require(Shared:WaitForChild("Population"))
 local MarketEvents = require(Shared:WaitForChild("MarketEvents"))
 local ShopAnalytics = require(Shared:WaitForChild("ShopAnalytics"))
 local ProfileStore = require(script.Parent:WaitForChild("ProfileStore"))
+local StoreVisuals = require(script.Parent:WaitForChild("StoreVisuals"))
 local Routes = require(ReplicatedStorage:WaitForChild("ModeRoutes"))
 local rng = Random.new()
 local population = Population.Create(Config.VirtualResidents, rng)
@@ -103,8 +104,11 @@ end
 
 local function updateSign(lot)
     local owner = lot.ownerId and Players:GetPlayerByUserId(lot.ownerId)
-    lot.label.Text = owner and (owner.DisplayName .. "\nLOJA " .. lot.id)
-        or ("LOJA " .. lot.id .. " - DISPONÍVEL\nAluguel $" .. Config.LeaseCost)
+    lot.label.Text = owner and ("VITRINE " .. string.format("%02d", lot.id) .. " | " .. owner.DisplayName)
+        or ("VITRINE " .. string.format("%02d", lot.id) .. " | ALUGUE AQUI")
+    if lot.statusLamp then
+        lot.statusLamp.Color = owner and Color3.fromRGB(83, 209, 139) or Color3.fromRGB(250, 194, 87)
+    end
     lot.prompt.Enabled = owner == nil
 end
 
@@ -112,111 +116,40 @@ local function refreshShelf(lot)
     for idx, product in ipairs(Catalog.List) do
         local display = lot.displays[product.id]
         if not display then
-            local x = lot.x + ((idx - 1) % 3 - 1) * 7
-            local z = lot.z + (math.floor((idx - 1) / 3) - 0.5) * 7
-            local stand = part(lot.model, "Prateleira " .. product.name,
-                Vector3.new(5.8, 1, 4.6), Vector3.new(x, 1.1, z),
-                Color3.fromRGB(87, 94, 103))
-            local goods = {}
-            for i = 1, 3 do
-                local size = Vector3.new(1.45, 1.1, 1.5)
-                local baseY = 2.25
-                if product.category == "roupa" then
-                    size = Vector3.new(1.35, 1.5, 0.65)
-                    baseY = 2.42
-                elseif product.category == "pao" then
-                    size = Vector3.new(1.3, 0.8, 1.3)
-                    baseY = 2.2
-                end
-                local piece = part(lot.model, product.name .. " #" .. i, size,
-                    Vector3.new(x + (i - 2) * 1.6, baseY, z),
-                    product.color)
-                piece.CanCollide = false
-                if product.category == "pao" then
-                    piece.Shape = Enum.PartType.Ball
-                end
-                goods[i] = piece
-            end
-            display = { goods = goods, text = sign(stand, "", Vector3.new(0, 3.2, 0)) }
+            display = StoreVisuals.BuildShelf(lot.model, lot, product, idx, part)
             lot.displays[product.id] = display
         end
         local qty = lot.shelf[product.id] or 0
+        -- Os produtos não são criados/destruídos a cada venda: só mudam transparência.
         for i, piece in ipairs(display.goods) do
             piece.Transparency = qty >= i and 0 or 1
         end
-        display.text.Text = product.name .. "\n$" .. lot.prices[product.id] .. " | " .. qty .. " un."
+        display.text.Text = product.name .. " | $" .. lot.prices[product.id] .. " | " .. qty .. " un."
     end
 end
 
 local function makeMap()
-    part(map, "Grama", Vector3.new(220, 1, 135), Vector3.new(0, -0.6, 0), Color3.fromRGB(102, 155, 110))
-    part(map, "Rua", Vector3.new(210, 0.2, 28), Vector3.new(0, 0, 0), Color3.fromRGB(55, 62, 71))
-    for i = -4, 4 do
-        part(map, "Faixa", Vector3.new(8, 0.04, 0.35), Vector3.new(i * 23, 0.14, 0), Color3.fromRGB(246, 214, 121))
-    end
-    -- Decoração estática de baixo custo: postes e árvores, sem luz dinâmica.
-    for _, x in ipairs({ -87, -43, 0, 43, 87 }) do
-        for _, side in ipairs({ -1, 1 }) do
-            local trunk = part(map, "Tronco urbano",
-                Vector3.new(1.3, 6.2, 1.3), Vector3.new(x, 3.1, side * 22.4),
-                Color3.fromRGB(120, 82, 54))
-            trunk.Shape = Enum.PartType.Cylinder
-            trunk.CanCollide = false
-            local canopy = part(map, "Copa",
-                Vector3.new(7, 6, 7), Vector3.new(x, 8.5, side * 22.4),
-                Color3.fromRGB(73, 151, 91))
-            canopy.Shape = Enum.PartType.Ball
-            canopy.CanCollide = false
-        end
-    end
-    for _, x in ipairs({ -68, -22, 22, 68 }) do
-        local post = part(map, "Poste de iluminação",
-            Vector3.new(0.65, 10, 0.65), Vector3.new(x, 5, 13),
-            Color3.fromRGB(77, 88, 100))
-        post.CanCollide = false
-        local lamp = part(map, "Luminária",
-            Vector3.new(3.3, 0.8, 1.6), Vector3.new(x, 10.3, 13),
-            Color3.fromRGB(245, 219, 143))
-        lamp.Material = Enum.Material.Neon
-        lamp.CanCollide = false
-    end
+    StoreVisuals.BuildStreet(map, part)
     for _, side in ipairs({ -1, 1 }) do
-        part(map, "Calçada", Vector3.new(210, 0.4, 8), Vector3.new(0, 0.15, side * 18), Color3.fromRGB(201, 204, 199))
         for _, x in ipairs(positions) do
             local id = #lots + 1
             local z = side * 43
-            local frontZ = z - side * 15
             local model = Instance.new("Model")
             model.Name = "Loja " .. id
             model.Parent = map
-            part(model, "Piso", Vector3.new(31, 0.5, 31), Vector3.new(x, 0, z), Color3.fromRGB(223, 217, 197))
-            part(model, "Fundo", Vector3.new(31, 9, 1), Vector3.new(x, 4.5, z + side * 15), Color3.fromRGB(231, 225, 215))
-            part(model, "Parede E", Vector3.new(1, 9, 31), Vector3.new(x - 15, 4.5, z), Color3.fromRGB(231, 225, 215))
-            part(model, "Parede D", Vector3.new(1, 9, 31), Vector3.new(x + 15, 4.5, z), Color3.fromRGB(231, 225, 215))
-            part(model, "Fachada E", Vector3.new(11, 9, 1), Vector3.new(x - 10, 4.5, frontZ), Color3.fromRGB(107, 161, 191))
-            part(model, "Fachada D", Vector3.new(11, 9, 1), Vector3.new(x + 10, 4.5, frontZ), Color3.fromRGB(107, 161, 191))
-            part(model, "Marquise", Vector3.new(31, 1, 4), Vector3.new(x, 9.3, frontZ), Color3.fromRGB(42, 117, 172))
-            part(model, "Balcão caixa", Vector3.new(4.5, 2.1, 2.4),
-                Vector3.new(x + 10.5, 1.3, frontZ + side * 4.7),
-                Color3.fromRGB(164, 119, 74))
-            local register = part(model, "Caixa registradora",
-                Vector3.new(2.5, 0.65, 1.6),
-                Vector3.new(x + 10.5, 2.7, frontZ + side * 4.7),
-                Color3.fromRGB(46, 59, 73))
-            register.CanCollide = false
-            local door = part(model, "Alugue aqui", Vector3.new(4, 0.3, 4), Vector3.new(x, 0.3, frontZ - side * 3), Color3.fromRGB(255, 201, 79))
-            door.CanCollide = false
+
+            local shell = StoreVisuals.BuildStore(model, id, x, z, side, part)
+            local door = shell.door
             local prompt = Instance.new("ProximityPrompt")
             prompt.ActionText = "Alugar loja"
-            prompt.ObjectText = "Loja " .. id
+            prompt.ObjectText = "Vitrine " .. id
             prompt.MaxActivationDistance = 12
             prompt.HoldDuration = 0.3
+            prompt.KeyboardKeyCode = Enum.KeyCode.E
             prompt.Parent = door
-            local anchor = part(model, "Placa", Vector3.new(1, 1, 1), Vector3.new(x, 8, frontZ), Color3.fromRGB(0, 0, 0), true)
-            anchor.CanCollide = false
             local lot = {
                 id = id, x = x, z = z, side = side, model = model, door = door,
-                prompt = prompt, label = sign(anchor, "", Vector3.new(0, 4, 0)),
+                prompt = prompt, label = shell.signLabel, statusLamp = shell.statusLamp,
                 ownerId = nil, employeeId = nil, employeeModel = nil,
                 leaseVersion = 0, analytics = ShopAnalytics.New(),
                 stock = {}, shelf = {}, prices = {}, costValue = {}, displays = {},
@@ -232,13 +165,13 @@ local function makeMap()
         end
     end
     local marketBoard = part(map, "Jornal da Rua", Vector3.new(1, 7, 10),
-        Vector3.new(-95, 3.5, -19), Color3.fromRGB(29, 53, 76))
+        Vector3.new(-112, 3.5, -17), Color3.fromRGB(29, 53, 76))
     marketBoard.CanCollide = false
     marketBoardText = sign(marketBoard, "MERCADO: Dia comum", Vector3.new(0, 4, 0))
     local spawn = Instance.new("SpawnLocation")
     spawn.Name = "Praça central"
-    spawn.Size = Vector3.new(10, 1, 10)
-    spawn.CFrame = CFrame.new(-98, 1, 0)
+    spawn.Size = Vector3.new(9, 0.9, 9)
+    spawn.CFrame = CFrame.new(-102, 0.75, 17)
     spawn.Color = Color3.fromRGB(65, 190, 150)
     spawn.Anchored = true
     spawn.Neutral = true
