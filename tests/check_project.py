@@ -31,6 +31,7 @@ sources = [
     "src/ReplicatedStorage/Shared/Catalog.luau",
     "src/ReplicatedStorage/Shared/CustomerRoute.luau",
     "src/ReplicatedStorage/Shared/CustomerMotion.luau",
+    "src/ReplicatedStorage/Shared/WorkerPlanner.luau",
     "src/ReplicatedStorage/Shared/ShopGuide.luau",
     "src/ReplicatedStorage/Shared/MarketEvents.luau",
     "src/ReplicatedStorage/Shared/ShopAnalytics.luau",
@@ -112,6 +113,23 @@ for mode_path in ("ranked.project.json", "price_war.project.json"):
     shared = json.loads((root / mode_path).read_text(encoding="utf-8"))["tree"]["ReplicatedStorage"]["Shared"]
     assert shared["ShopGuide"]["$path"].endswith("ShopGuide.luau")
 assert "Config.MaxVisibleCustomers" in server
+assert 'WorkerPlanner = require(Shared:WaitForChild("WorkerPlanner"))' in server
+assert 'WorkerPlanner.Next(Catalog, lot.stock, lot.shelf, Config.ShelfCapacity)' in server
+assert "function workEmployee(lot)" in server
+assert "followRoute(worker, CustomerRoute.StaffToShelf(lot, index))" in server
+assert "followRoute(worker, CustomerRoute.StaffReturn(lot, index))" in server
+assert 'task.wait(Config.WorkerCycleSeconds or 11)' in server
+assert "lot.workerBusy" in server and "lot.workerProductId" in server
+assert "workerBusy = lot ~= nil and lot.workerBusy or false" in server
+assert "state.workerBusy" in client and "Repositor abastecendo..." in client
+assert "function Route.StaffToShelf" in (root / "src/ReplicatedStorage/Shared/CustomerRoute.luau").read_text(encoding="utf-8")
+assert "function Route.StaffReturn" in (root / "src/ReplicatedStorage/Shared/CustomerRoute.luau").read_text(encoding="utf-8")
+assert "local sendState -- referência antecipada" in server and "sendState = function(player)" in server
+assert (root / "tests/worker_planner.spec.luau").exists()
+for route_path in ("ranked.project.json", "price_war.project.json"):
+    mode_tree = json.loads((root / route_path).read_text(encoding="utf-8"))["tree"]
+    assert mode_tree["ReplicatedStorage"]["Shared"]["WorkerPlanner"]["$path"].endswith("WorkerPlanner.luau")
+
 assert 'CustomerMotion = require(Shared:WaitForChild("CustomerMotion"))' in server
 assert "CustomerMotion.StepDistance" in server and "CustomerMotion.Stride" in server
 assert 'lastPose < 0.08' in server
