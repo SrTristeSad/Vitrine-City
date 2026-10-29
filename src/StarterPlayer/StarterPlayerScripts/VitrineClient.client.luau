@@ -2,6 +2,7 @@
 -- Vitrine City | interface responsiva inicial (PC / celular).
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
 local remotes = ReplicatedStorage:WaitForChild("VitrineRemotes")
 local actionEvent = remotes:WaitForChild("Action")
@@ -118,10 +119,16 @@ local heading = text(panel, "VITRINE CITY", 27, 19, C.bright, true)
 local summary = text(panel, "Conectando ao mercado...", 101, 12, C.muted)
 summary.Position = UDim2.fromOffset(0, 29)
 
+local marketNews = text(panel, "NOTÍCIAS DO MERCADO • Carregando...", 43, 12, C.amber, true)
+marketNews.Position = UDim2.fromOffset(0, 136)
+marketNews.BackgroundColor3 = C.card
+marketNews.BackgroundTransparency = 0.25
+rounded(marketNews, 7)
+
 local scroll = Instance.new("ScrollingFrame")
 scroll.Name = "Inventário"
-scroll.Position = UDim2.fromOffset(0, 132)
-scroll.Size = UDim2.new(1, 0, 1, -136)
+scroll.Position = UDim2.fromOffset(0, 185)
+scroll.Size = UDim2.new(1, 0, 1, -189)
 scroll.BackgroundTransparency = 1
 scroll.BorderSizePixel = 0
 scroll.ScrollBarThickness = 5
@@ -146,6 +153,7 @@ rounded(notice, 9)
 
 local opened = true
 local latest = nil
+local lastInventorySignature = nil
 local compact = false
 local order = 0
 local function nextOrder(frame)
@@ -180,7 +188,9 @@ local function adapt()
     if not camera then return end
     local width = camera.ViewportSize.X
     local height = camera.ViewportSize.Y
+    local wasCompact = compact
     compact = width < 650
+    if wasCompact ~= compact then lastInventorySignature = nil end
     panel.Size = UDim2.fromOffset(math.min(438, math.max(265, width - 24)), math.max(285, height - 92))
     if compact and not latest then
         opened = false
@@ -271,6 +281,12 @@ local function render(state)
         return
     end
     summary.TextColor3 = C.muted
+    local event = state.market
+    if event and event.title then
+        marketNews.Text = "NOTÍCIA: " .. event.title .. "\n" .. (event.description or "")
+    else
+        marketNews.Text = "NOTÍCIAS DO MERCADO • Dia comum"
+    end
     returnButton.Active = state.lobbyConfigured == true and not state.returning
     returnButton.AutoButtonColor = returnButton.Active
     returnButton.BackgroundColor3 = returnButton.Active and C.blue or C.slate
@@ -294,6 +310,14 @@ local function render(state)
         "\n" .. saveInfo ..
         (competitive and ("\nRodada " .. state.round .. "   |   " .. math.ceil(state.remaining / 60) .. " min restantes") or "")
 
+    -- Não destruir/recriar todos os cartões a cada 5 segundos quando nada mudou.
+    -- Economia/cronômetro/avisos continuam atualizados acima deste ponto.
+    local fingerprint = HttpService:JSONEncode({
+        state.lot, state.hasEmployee, state.eliminated,
+        state.products, state.bids, state.ranking, competitive, compact,
+    })
+    if fingerprint == lastInventorySignature then return end
+    lastInventorySignature = fingerprint
     local savedY = scroll.CanvasPosition.Y
     order = 0
     for _, child in ipairs(scroll:GetChildren()) do
