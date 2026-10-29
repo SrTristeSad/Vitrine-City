@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared:WaitForChild("Config"))
@@ -12,6 +13,7 @@ local Catalog = require(Shared:WaitForChild("Catalog"))
 local Economy = require(Shared:WaitForChild("Economy"))
 local Population = require(Shared:WaitForChild("Population"))
 local ProfileStore = require(script.Parent:WaitForChild("ProfileStore"))
+local Routes = require(ReplicatedStorage:WaitForChild("ModeRoutes"))
 local rng = Random.new()
 local population = Population.Create(Config.VirtualResidents, rng)
 local competitive = Config.Mode ~= "normal"
@@ -33,7 +35,7 @@ local map = Instance.new("Folder")
 map.Name = "VitrineCityMap"
 map.Parent = Workspace
 local accounts, lots, supplier, bids = {}, {}, {}, {}
-local savedShops, closing = {}, {}
+local savedShops, closing, returning = {}, {}, {}
 local activeCustomers, customerVisits, completedSales = 0, 0, 0
 local round = 1
 local remaining = Config.RoundSeconds
@@ -281,7 +283,7 @@ end
 
 local function rent(player, lot)
     local account = accounts[player.UserId]
-    if not account or account.persistence == "conflict" or lot.ownerId or getLot(player.UserId) or account.eliminated then return end
+    if not account or returning[player.UserId] or account.persistence == "conflict" or lot.ownerId or getLot(player.UserId) or account.eliminated then return end
     local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not root or (root.Position - lot.door.Position).Magnitude > 18 then return end
     local restored = savedShops[player.UserId]
@@ -344,6 +346,8 @@ local function sendState(player)
     end
     stateEvent:FireClient(player, {
         mode = Config.Mode, cash = account.cash, sales = account.sales,
+        lobbyConfigured = Routes.lobby ~= nil and typeof(Routes.lobby.placeId) == "number" and Routes.lobby.placeId > 0,
+        returning = returning[player.UserId] == true,
         persistence = account.persistence or "session",
         profit = math.floor(account.revenue - account.expenses),
         lot = lot and lot.id or 0, hasEmployee = lot ~= nil and lot.employeeId ~= nil,
@@ -360,7 +364,7 @@ end
 local function sale(lot, product, expectedPrice, expectedOwner, person)
     if not lot.ownerId or lot.ownerId ~= expectedOwner then return false end
     local account = accounts[lot.ownerId]
-    if not account or not product or account.eliminated or account.persistence == "conflict" then return false end
+    if not account or not product or account.eliminated or account.persistence == "conflict" or returning[lot.ownerId] then return false end
     local price = lot.prices[product.id]
     if price ~= expectedPrice or lot.shelf[product.id] < 1 or person.wallet < price then return false end
     local units = lot.shelf[product.id] + lot.stock[product.id]
@@ -473,7 +477,7 @@ local function payBills()
     for _, lot in ipairs(lots) do
         if lot.ownerId then
             local account = accounts[lot.ownerId]
-            if account and account.persistence ~= "conflict" then
+            if account and account.persistence ~= "conflict" and not returning[lot.ownerId] then
                 local wages = lot.employeeId and Config.EmployeeWage or 0
                 local bill = Config.DailyRent + wages
                 if account.cash >= bill then
@@ -540,11 +544,70 @@ local function endRound(reason)
     remaining, elapsedRound = Config.RoundSeconds, 0
 end
 
+-- O lobby é sempre um Place público. Nenhum ID é aceito do cliente.
+local function returnToLobby(player)
+    local userId = player.UserId
+    local account = accounts[userId]
+    if not account or returning[userId] or closing[userId] then return end
+    local lobbyId = Routes.lobby and Routes.lobby.placeId or 0
+    if typeof(lobbyId) ~= "number" or lobbyId <= 0 or lobbyId == game.PlaceId then
+        message(player, "O Place do lobby ainda não foi configurado.")
+        return
+    end
+    if RunService:IsStudio() then
+        message(player, "O retorno ao lobby precisa ser testado no aplicativo Roblox publicado.")
+        return
+    end
+    if account.persistence == "conflict" then
+        message(player, "A sessão perdeu a trava. Saia e reconecte para recuperar os dados.")
+        return
+    end
+    returning[userId] = true
+    sendState(player)
+    if not competitive and account.persistence == "persistent" then
+        -- Congelar as operações desta loja antes do snapshot; evitar perder a última compra.
+        local snapshot = profileSnapshot(userId)
+        local ok, reason = ProfileStore.Save(userId, snapshot, Catalog)
+        if not ok then
+            returning[userId] = nil
+            message(player, "Não foi possível salvar sua loja. Retorno cancelado para proteger os dados.")
+            warn("Vitrine City: bloqueando retorno sem save de " .. userId .. ": " .. tostring(reason))
+            sendState(player)
+            return
+        end
+    end
+    if player.Parent ~= Players then return end
+    local ok, err = pcall(function()
+        TeleportService:TeleportAsync(lobbyId, { player })
+    end)
+    if not ok then
+        returning[userId] = nil
+        warn("Vitrine City: falha no retorno ao lobby: " .. tostring(err))
+        message(player, "Falha na conexão com o lobby. Tente novamente.")
+        sendState(player)
+    end
+end
+
+TeleportService.TeleportInitFailed:Connect(function(player, result, errorMessage, targetPlaceId, _options)
+    if not returning[player.UserId] then return end
+    if Routes.lobby and targetPlaceId == Routes.lobby.placeId then
+        returning[player.UserId] = nil
+        warn("Vitrine City: retorno falhou: " .. tostring(result) .. " / " .. tostring(errorMessage))
+        message(player, "Não foi possível retornar ao lobby. Sua loja continua aqui.")
+        sendState(player)
+    end
+end)
+
 local nextBidSequence = 0
 local function handleAction(player, action, payload)
     local account = accounts[player.UserId]
     if not account then return end
     if action == "GetState" then sendState(player); return end
+    if action == "ReturnToLobby" then
+        task.spawn(returnToLobby, player)
+        return
+    end
+    if returning[player.UserId] then return end
     if account.persistence == "conflict" then message(player, "Sua sessão está bloqueada para proteger os dados."); return end
     if type(payload) ~= "table" then return end
     local lot = getLot(player.UserId)
@@ -623,7 +686,7 @@ for _, lot in ipairs(lots) do
     end)
 end
 
-local ACCEPTED = { GetState = true, Hire = true, Buy = true, Stock = true, Price = true, Bid = true, CancelBid = true }
+local ACCEPTED = { GetState = true, ReturnToLobby = true, Hire = true, Buy = true, Stock = true, Price = true, Bid = true, CancelBid = true }
 actionEvent.OnServerEvent:Connect(function(player, action, payload)
     if type(action) ~= "string" or not ACCEPTED[action] then return end
     local now = os.clock()
@@ -693,7 +756,7 @@ local function leave(player)
             if not success then warn("Vitrine City: falha ao salvar saída de " .. userId .. ": " .. tostring(reason)) end
         end
     end
-    accounts[userId], savedShops[userId], lastAction[userId] = nil, nil, nil
+    accounts[userId], savedShops[userId], lastAction[userId], returning[userId] = nil, nil, nil, nil
     closing[userId] = nil
 end
 
@@ -732,7 +795,7 @@ task.spawn(function()
     while true do
         task.wait(11)
         for _, lot in ipairs(lots) do
-            if lot.ownerId and lot.employeeId then
+            if lot.ownerId and lot.employeeId and not returning[lot.ownerId] then
                 local changed = false
                 for _, p in ipairs(Catalog.List) do
                     if restock(lot, p.id) > 0 then changed = true end
