@@ -73,6 +73,13 @@ assert "Population.FinishPurchase" in server
 assert "Population.PayWorker" in server
 assert "ProfileStore.Load" in server and "ProfileStore.Save" in server and "ProfileStore.Release" in server
 assert "ProfileStore" in profiles and "UpdateAsync" in profiles
+# Um projeto .rbxlx não publicado deve iniciar no Studio sem tentar GetDataStore.
+# A aquisição precisa ocorrer apenas ao carregar/salvar perfis persistentes.
+assert 'local store = DataStoreService:GetDataStore(' not in profiles, "GetDataStore antecipado impede Play em Place não publicado"
+assert 'local function getStore()' in profiles
+assert profiles.count('getStore():UpdateAsync(') == 2
+assert 'if disabled() then return cleanProfile({}, catalog), "session" end' in profiles
+assert 'if disabled() then return true end' in profiles
 assert "RunService:IsStudio()" in profiles and "Config.StudioPersistence" in profiles
 assert "Config.AutosaveSeconds" in server
 analytics = (root / "src/ReplicatedStorage/Shared/ShopAnalytics.luau").read_text(encoding="utf-8")
