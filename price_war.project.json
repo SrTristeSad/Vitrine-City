@@ -23,6 +23,9 @@
         },
         "MarketEvents": {
           "$path": "src/ReplicatedStorage/Shared/MarketEvents.luau"
+        },
+        "ShopAnalytics": {
+          "$path": "src/ReplicatedStorage/Shared/ShopAnalytics.luau"
         }
       },
       "ModeRoutes": {
