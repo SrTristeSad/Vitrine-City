@@ -28,6 +28,11 @@ local function cleanLedger(raw)
     return result
 end
 
+local function field(source, id)
+    if typeof(source) == "table" then return source[id] end
+    return nil
+end
+
 local function cleanShop(shop, catalog)
     if typeof(shop) ~= "table" then return nil end
     local result = { stock = {}, shelf = {}, costValue = {}, prices = {}, reputation = 50, hasEmployee = shop.hasEmployee == true }
@@ -35,10 +40,10 @@ local function cleanShop(shop, catalog)
     result.analytics = ShopAnalytics.Restore(shop.analytics, catalog)
     for _, item in ipairs(catalog.List) do
         local id = item.id
-        result.stock[id] = math.clamp(money(shop.stock and shop.stock[id], 0), 0, 100000)
-        result.shelf[id] = math.clamp(money(shop.shelf and shop.shelf[id], 0), 0, Config.ShelfCapacity)
-        result.costValue[id] = money(shop.costValue and shop.costValue[id], 0)
-        result.prices[id] = math.clamp(money(shop.prices and shop.prices[id], item.retail), 1, item.retail * 3)
+        result.stock[id] = math.clamp(money(field(shop.stock, id), 0), 0, 100000)
+        result.shelf[id] = math.clamp(money(field(shop.shelf, id), 0), 0, Config.ShelfCapacity)
+        result.costValue[id] = money(field(shop.costValue, id), 0)
+        result.prices[id] = math.clamp(money(field(shop.prices, id), item.retail), 1, item.retail * 3)
     end
     return result
 end
