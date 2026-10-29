@@ -14,6 +14,7 @@ local Economy = require(Shared:WaitForChild("Economy"))
 local Population = require(Shared:WaitForChild("Population"))
 local MarketEvents = require(Shared:WaitForChild("MarketEvents"))
 local ShopAnalytics = require(Shared:WaitForChild("ShopAnalytics"))
+local CustomerRoute = require(Shared:WaitForChild("CustomerRoute"))
 local ProfileStore = require(script.Parent:WaitForChild("ProfileStore"))
 local StoreVisuals = require(script.Parent:WaitForChild("StoreVisuals"))
 local Routes = require(ReplicatedStorage:WaitForChild("ModeRoutes"))
@@ -193,6 +194,9 @@ local function npcModel(name, x, z, employee)
         { "Cabeça", Vector3.new(1.4, 1.4, 1.4), Vector3.new(0, 1.7, 0), Color3.fromRGB(214, 170, 132) },
         { "Perna E", Vector3.new(0.8, 1.6, 0.8), Vector3.new(-0.5, -1.7, 0), Color3.fromRGB(55, 68, 86) },
         { "Perna D", Vector3.new(0.8, 1.6, 0.8), Vector3.new(0.5, -1.7, 0), Color3.fromRGB(55, 68, 86) },
+        { "Braço E", Vector3.new(0.6, 1.75, 0.7), Vector3.new(-1.28, 0, 0), Color3.fromRGB(214, 170, 132) },
+        { "Braço D", Vector3.new(0.6, 1.75, 0.7), Vector3.new(1.28, 0, 0), Color3.fromRGB(214, 170, 132) },
+        { "Cabelo", Vector3.new(1.5, 0.44, 1.5), Vector3.new(0, 2.48, 0), Color3.fromRGB(55, 50, 49) },
     }
     for _, piece in ipairs(body) do
         local limb = part(model, piece[1], piece[2], Vector3.new(x, 3, z) + piece[3], piece[4])
@@ -205,16 +209,32 @@ end
 
 local function moveNpc(model, x, z, seconds)
     if not model.Parent then return end
+    local current = model:GetPivot().Position
+    local destination = Vector3.new(x, 3, z)
     local driver = Instance.new("CFrameValue")
     driver.Value = model:GetPivot()
     local conn = driver.Changed:Connect(function(value)
         if model.Parent then model:PivotTo(value) end
     end)
-    local tween = TweenService:Create(driver, TweenInfo.new(seconds, Enum.EasingStyle.Linear), { Value = CFrame.new(x, 3, z) })
+    local distance = (Vector3.new(current.X, 0, current.Z) - Vector3.new(x, 0, z)).Magnitude
+    local facing = distance > 0.01 and CFrame.lookAt(destination,
+        destination + Vector3.new(x - current.X, 0, z - current.Z)) or driver.Value
+    local tween = TweenService:Create(driver, TweenInfo.new(math.max(0.05, seconds), Enum.EasingStyle.Linear),
+        { Value = facing })
     tween:Play()
     tween.Completed:Wait()
     conn:Disconnect()
     driver:Destroy()
+end
+
+local function followRoute(model, steps)
+    for _, waypoint in ipairs(steps) do
+        if not model.Parent then return end
+        local start = model:GetPivot().Position
+        local seconds = CustomerRoute.Duration(start.X, start.Z, waypoint.x, waypoint.z)
+        moveNpc(model, waypoint.x, waypoint.z, seconds)
+        if waypoint.hold > 0 then task.wait(waypoint.hold) end
+    end
 end
 
 local function restock(lot, id)
@@ -414,15 +434,21 @@ local function generateCustomer()
     local owner = target.ownerId
     local lease = target.leaseVersion
     local sidewalk = target.side * 17
-    local npc = npcModel((CATEGORY[need.category] or need.category) .. " | " .. person.profession, arrivalX, sidewalk, false)
+    local soughtProduct = offer.product
+        or (Catalog.ByCategory[need.category] and Catalog.ByCategory[need.category][1])
+    local shelfIndex = 1
+    for index, item in ipairs(Catalog.List) do
+        if soughtProduct and item.id == soughtProduct.id then shelfIndex = index; break end
+    end
+    local npc = npcModel("PROCURANDO: " .. (CATEGORY[need.category] or need.category), arrivalX, sidewalk, false)
     activeCustomers += 1
     customerVisits += 1
     task.spawn(function()
         local bought = false
         local ok, err = pcall(function()
-            moveNpc(npc, target.x, sidewalk, math.max(0.35, math.abs(target.x - arrivalX) / 16))
-            moveNpc(npc, target.x, target.z - target.side * 8, 1.2)
-            task.wait(0.35)
+            -- Percurso completo: calçada -> porta -> gôndola -> caixa -> porta -> calçada.
+            followRoute(npc, CustomerRoute.Approach(target, arrivalX, shelfIndex))
+            followRoute(npc, CustomerRoute.Checkout(target, shelfIndex))
             local validVisit = round == startedRound and target.ownerId == owner
                 and target.leaseVersion == lease and owner ~= nil
                 and accounts[owner] ~= nil and not returning[owner]
@@ -437,16 +463,19 @@ local function generateCustomer()
                     target.reputation = math.max(10, target.reputation - 0.12)
                 end
             end
+            local signGui = npc.PrimaryPart and npc.PrimaryPart:FindFirstChild("Letreiro")
+            local statusLabel = signGui and signGui:FindFirstChild("StatusCliente")
             if bought and offer.product then
-                local signGui = npc.PrimaryPart:FindFirstChild("Letreiro")
-                local statusLabel = signGui and signGui:FindFirstChild("StatusCliente")
                 if statusLabel then statusLabel.Text = "COMPROU: " .. offer.product.name end
                 local pos = npc:GetPivot().Position
                 local bag = part(npc, "Sacola de compras", Vector3.new(1.05, 1.2, 0.75),
                     pos + Vector3.new(1.4, -0.6, 0), Color3.fromRGB(235, 201, 133))
                 bag.CanCollide = false
+                -- A sacola é filha do Model e acompanha todos os Model:PivotTo.
+            elseif statusLabel then
+                statusLabel.Text = "NÃO ENCONTROU O QUE QUERIA"
             end
-            moveNpc(npc, target.x, sidewalk, 1.1)
+            followRoute(npc, CustomerRoute.Exit(target, arrivalX))
         end)
         if not ok then warn("Vitrine City NPC: " .. tostring(err)) end
         if not bought then Population.FinishPurchase(population, person, 0) end
