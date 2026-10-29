@@ -13,6 +13,9 @@ Jogo Roblox **original** em Luau. Uma rua comercial multiplayer com locação de
 7. Não declarar testes no Studio se não foram executados.
 8. Rua Livre salva via ProfileStore e `UpdateAsync` com lease e autosave; não ligar StudioPersistence para jogos publicados.
 9. Não sobrescrever dados reais em falha de carregamento nem misturar dados competitivos com perfis persistidos.
+10. Cada modo possui projeto Rojo próprio. O servidor determina o modo, nunca confie em argumentos do cliente.
+11. Competitivo publicado aceita apenas servidor reservado. Fila é local ao servidor do lobby; não declarar matchmaking global.
+12. IDs zero em ModeRoutes desativam teleportes. Nunca inventar PlaceIds.
 
 ## Estrutura
 - `src/ReplicatedStorage/Shared`: Config, Catalog, Economy, Population.
@@ -21,7 +24,7 @@ Jogo Roblox **original** em Luau. Uma rua comercial multiplayer com locação de
 - `docs`: GDD, economia, monetização, testes.
 
 ## Próximo trabalho
-Prioridade: executar e testar no Roblox Studio; corrigir erros reais do Output; validar DataStore em ambiente de teste publicado e só então criar lobby, matchmaking e teleporte para Places distintos. Persistência da Rua Livre já implementada, mas ainda sem playtest em produção. Não adicionar seis modos superficiais antes de estabilizar o principal.
+O lobby, os quatro Places e as filas **locais** já estão codificados. Prioridade: configurar os PlaceIds reais no ModeRoutes, publicar em experiência de teste e validar teleportes no cliente Roblox, além de corrigir erros reais do Studio e verificar DataStore. Depois, implementar matchmaking **global** (MemoryStore), reconexão e proteção de entrada tardia. Não adicionar seis modos superficiais antes de estabilizar o principal.
 
 ## Padrão de entrega
 Em cada alteração: resumo do comportamento, arquivos alterados, testes efetivamente rodados e limitações. Proteger eventos remotos contra dados falsificados e compras duplicadas. Documentar qualquer mudança de configuração econômica em `docs/ECONOMIA.md`.
