@@ -7,6 +7,8 @@ Simulador econômico original em **Roblox (Luau)**. Jogadores alugam pontos come
 - **Guerra Comercial:** consumidores e estoques de fornecedores compartilhados por partida.
 - **Guerra de Preços:** regra inicial de falência eliminatória e último sobrevivente, ainda sem matchmaking.
 - **População virtual:** profissões, renda e consumo calculados sem renderizar uma cidade inteira.
+- **Eventos econômicos:** escassez de queijo, feira de roupas, colheitas e mudanças de procura afetam NPCs e fornecedores.
+- **Rua visual:** mercadorias separadas nas prateleiras, balcões, árvores e clientes que saem com sacolas quando compram.
 - **Monetização justa:** cosméticos, sem vender vantagens econômicas no ranqueado.
 
 ## Início
@@ -21,7 +23,7 @@ rojo build price_war.project.json -o VitrineCity-GuerraDePrecos.rbxlx
 
 Abra cada arquivo `.rbxlx` no Roblox Studio para testar o mapa gerado por scripts. O GitHub Actions também cria os quatro arquivos em um único artefato.
 
-O GitHub Actions verifica a sintaxe Luau, valida a estrutura e disponibiliza o artefato `VitrineCity-Places` com os quatro lugares compilados. Esses testes não substituem testes de execução no Studio.
+O GitHub Actions verifica a sintaxe Luau, valida a estrutura e disponibiliza o artefato `VitrineCity-Places` com os quatro lugares compilados. A v0.6 também evita redesenhar cartões de inventário quando seus dados não mudaram. Confira [eventos econômicos e otimização](docs/EVENTOS_MERCADO.md). Esses testes não substituem testes de execução no Studio.
 
 ### Lobby e partidas reservadas
 O lobby dispõe de três quiosques. Para publicar, configure os **quatro** PlaceIds (incluindo Lobby) em `src/ReplicatedStorage/ModeRoutes.luau` (**0 significa desabilitado**) e publique os quatro Places **na mesma experiência Roblox**. O Lobby deve ser a entrada principal. Os modos competitivos usam **matchmaking global beta**, permitindo reunir 2–8 jogadores de lobbies diferentes através de `MemoryStoreService` e partidas reservadas por `TeleportService`. No Roblox Studio permanece uma fila local para testes. Consulte [matchmaking global](docs/MATCHMAKING_GLOBAL.md). Todas as lojas possuem **VOLTAR AO LOBBY**, com confirmação e salvamento prévio na Rua Livre. Veja [o guia do lobby](docs/MODOS_LOBBY.md). Teleportes não funcionam no Studio.
