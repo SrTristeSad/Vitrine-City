@@ -29,11 +29,16 @@ jobs:
       - name: Check Luau syntax
         run: |
           find src -name '*.luau' -print0 | xargs -0 -n 1 /tmp/luau-cli/luau-compile >/dev/null
-      - name: Build Roblox place
-        run: rojo build default.project.json -o VitrineCity.rbxlx
-      - name: Save playable Studio place artifact
+      - name: Build all Roblox places
+        run: |
+          mkdir -p dist
+          rojo build lobby.project.json -o dist/VitrineCity-Lobby.rbxlx
+          rojo build default.project.json -o dist/VitrineCity-RuaLivre.rbxlx
+          rojo build ranked.project.json -o dist/VitrineCity-GuerraComercial.rbxlx
+          rojo build price_war.project.json -o dist/VitrineCity-GuerraDePrecos.rbxlx
+      - name: Save playable Studio place artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: VitrineCity-place
-          path: VitrineCity.rbxlx
+          name: VitrineCity-Places
+          path: dist/*.rbxlx
           retention-days: 30
