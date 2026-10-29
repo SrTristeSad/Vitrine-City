@@ -161,9 +161,14 @@ local function makeMap()
             managementPrompt.MaxActivationDistance = 9
             managementPrompt.HoldDuration = 0.15
             managementPrompt.Parent = shell.cashRegister
+            -- Um único indicador reutilizável por loja, sem instanciar GUI a cada compra.
+            local checkoutLabel = sign(shell.cashRegister, "", Vector3.new(0, 4.1, 0))
+            checkoutLabel.TextColor3 = Color3.fromRGB(111, 244, 173)
+            checkoutLabel.Visible = false
             local lot = {
                 id = id, x = x, z = z, side = side, model = model, door = door,
                 prompt = prompt, managementPrompt = managementPrompt,
+                checkoutLabel = checkoutLabel, saleSerial = 0,
                 label = shell.signLabel, statusLamp = shell.statusLamp, theme = shell.theme,
                 ownerId = nil, employeeId = nil, employeeModel = nil,
                 leaseVersion = 0, analytics = ShopAnalytics.New(), receipts = {},
@@ -288,6 +293,8 @@ end
 
 local function resetLot(lot)
     lot.leaseVersion += 1
+    lot.saleSerial += 1
+    lot.checkoutLabel.Visible = false
     lot.analytics = ShopAnalytics.New()
     lot.receipts = {}
     if lot.employeeId then Population.Layoff(population, lot.employeeId) end
@@ -460,10 +467,20 @@ local function sale(lot, product, expectedPrice, expectedOwner, expectedLease, p
         margin = math.floor(price - historicalCost + 0.5),
     })
     if #lot.receipts > 5 then table.remove(lot.receipts) end
+    lot.saleSerial += 1
+    local serial = lot.saleSerial
+    lot.checkoutLabel.Text = "+$" .. price .. "  " .. product.name
+    lot.checkoutLabel.Visible = true
+    task.delay(2.5, function()
+        if lot.checkoutLabel.Parent and lot.saleSerial == serial then
+            lot.checkoutLabel.Visible = false
+        end
+    end)
     Population.FinishPurchase(population, person, price)
     refreshShelf(lot)
-    message(Players:GetPlayerByUserId(lot.ownerId),
-        "VENDA REALIZADA: " .. product.name .. "  +$" .. price)
+    local owner = Players:GetPlayerByUserId(lot.ownerId)
+    message(owner, "VENDA REALIZADA: " .. product.name .. "  +$" .. price)
+    if owner then sendState(owner) end
     return true
 end
 
