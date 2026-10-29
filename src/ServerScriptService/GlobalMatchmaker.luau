@@ -40,6 +40,7 @@ function GlobalMatchmaker.new(routes, notify, changed)
     self.changed = changed
     self.active = {}
     self.inFlight = {}
+    self.inspectBusy = {}
     self.approxWaiting = { ranked = 0, price_war = 0 }
     if self.enabled then
         task.spawn(function() self:_runPlayers() end)
@@ -126,7 +127,7 @@ end
 
 function GlobalMatchmaker:Remove(player)
     local entry = self.active[player.UserId]
-    self.active[player.UserId], self.inFlight[player.UserId] = nil, nil
+    self.active[player.UserId], self.inFlight[player.UserId], self.inspectBusy[player.UserId] = nil, nil, nil
     if entry then
         task.spawn(function() self:_cancelRecord(player.UserId, entry) end)
     end
@@ -346,9 +347,14 @@ function GlobalMatchmaker:_runPlayers()
                     if os.clock() - started >= FLIGHT_TIMEOUT then
                         self:TeleportFailed(player, "Tempo limite de conexão. Tente entrar novamente.")
                     end
-                else
+                elseif not self.inspectBusy[userId] then
+                    self.inspectBusy[userId] = true
                     task.spawn(function()
-                        if self.active[userId] == entry then self:_inspect(player, entry) end
+                        if self.active[userId] == entry then
+                            local ok, err = pcall(function() self:_inspect(player, entry) end)
+                            if not ok then warn("Vitrine City: falha ao consultar ticket: " .. tostring(err)) end
+                        end
+                        self.inspectBusy[userId] = nil
                     end)
                 end
             end
