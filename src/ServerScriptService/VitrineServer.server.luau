@@ -273,6 +273,11 @@ local function moveNpc(model, x, z, seconds)
     if model.Parent then
         model:SetAttribute("Walked", walked + distance)
         model:PivotTo(endFacing)
+        -- Voltar à pose neutra durante a pausa de observação e no caixa.
+        if leftLeg then leftLeg.CFrame = endFacing * CFrame.new(-0.5, -1.7, 0) end
+        if rightLeg then rightLeg.CFrame = endFacing * CFrame.new(0.5, -1.7, 0) end
+        if leftArm then leftArm.CFrame = endFacing * CFrame.new(-1.28, 0, 0) end
+        if rightArm then rightArm.CFrame = endFacing * CFrame.new(1.28, 0, 0) end
     end
 end
 
