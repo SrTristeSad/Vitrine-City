@@ -14,7 +14,7 @@ Cada Place recebe um `.rbxlx` no artefato `VitrineCity-Places` do GitHub Actions
 1. No **Roblox Studio / Creator Dashboard**, crie uma experiência de teste e quatro Places dentro dela; escolha o **Lobby** como Place de entrada (start place).
 2. Faça build dos quatro arquivos com Rojo ou baixe o artefato da pipeline CI. Publique cada `.rbxlx` no **Place correspondente**, sem criar quatro experiências independentes.
 3. Copie os **PlaceIds reais**, nunca os UniverseIds, de Rua Livre, Guerra Comercial e Guerra de Preços.
-4. Abra `src/ReplicatedStorage/ModeRoutes.luau`; substitua os três `placeId = 0` pelos IDs da experiência de teste; commite para gerar o lobby atualizado. IDs zerados desabilitam a entrada de propósito.
+4. Abra `src/ReplicatedStorage/ModeRoutes.luau`; substitua os **quatro** `placeId = 0` pelos PlaceIds reais: o do próprio **Lobby**, da **Rua Livre**, da **Guerra Comercial** e da **Guerra de Preços**. O ID do Lobby é obrigatório para que o botão **VOLTAR AO LOBBY** funcione. IDs zerados desabilitam o teleporte de propósito.
 5. Para testes locais: abra o arquivo `VitrineCity-Lobby.rbxlx`, pressione Play e confira quiosques, botões, filas e avisos. **TeleportService não funciona no Studio**.
 6. Para testes reais: publique o lobby e os Places, inicie **no cliente Roblox** com 2+ contas, entre na fila e confirme que os usuários foram enviados à mesma partida reservada e que os saldos são exclusivos da rodada.
 7. Faça o mesmo com o jogo de produção somente após validar o ambiente de teste. Não habilite `StudioPersistence` com dados de produção.
@@ -27,6 +27,24 @@ Cada Place recebe um `.rbxlx` no artefato `VitrineCity-Places` do GitHub Actions
 - Falhas síncronas de teleporte são tratadas com `pcall`; `TeleportInitFailed` reencaminha participantes de partidas para a fila local. Não há repetição infinita automática.
 - Fora do Studio, o Place competitivo rejeita acesso direto por servidor público. Somente sessões reservadas são aceitas.
 - A interface do lobby funciona em telas móveis e PC; há quiosques 3D com ProximityPrompts.
+
+## Retorno ao lobby (v0.4)
+- Todas as lojas e modos competitivos exibem **VOLTAR AO LOBBY** na interface. O jogador confirma a saída com um segundo toque para evitar saídas acidentais.
+- A navegação é solicitada ao **servidor**, nunca a um PlaceId fornecido pelo cliente.
+- Na Rua Livre, o servidor congela novas transações, captura um snapshot do perfil e chama `ProfileStore.Save` antes do teleporte. Se a gravação falhar, o retorno é cancelado e a operação comercial volta a ficar disponível.
+- Quando o teleporte começa, a sessão antiga é liberada no `PlayerRemoving`; o próximo servidor recupera os dados como em uma reconexão normal.
+- No competitivo, o retorno abandona aquela sessão. Moeda, contratos e estoque do ranqueado não são levados ao lobby ou à Rua Livre.
+- Os eventos `TeleportInitFailed` e um prazo de recuperação de 50 segundos evitam, quando possível, que o botão permaneça bloqueado após uma falha.
+- Nenhum teleporte funciona em testes locais do Studio: publicar os Places e testar no **cliente Roblox**.
+
+### Checklist de retorno
+- [ ] Em Rua Livre publicada: comprar mercadorias -> retornar ao lobby -> entrar na Rua Livre novamente -> validar saldo e inventário.
+- [ ] Alterar o preço e retornar imediatamente; conferir se o salvamento foi feito antes da saída.
+- [ ] Falha de DataStore: teleporte deve ser cancelado e dinheiro/estoque permanecem no servidor atual.
+- [ ] Falha de TeleportAsync e de TeleportInitFailed: botão é reativado e jogador recebe mensagem.
+- [ ] No ranqueado, sair no meio da partida não afeta os saldos de outros jogadores.
+- [ ] Em Studio, botão informa que o teleporte deve ser testado em jogo publicado.
+- [ ] Repetir testes em celular.
 
 ## Limitações conhecidas
 - **A fila é por servidor de lobby**, não global: jogadores em lobbies diferentes não serão combinados. Matchmaking global precisará de MemoryStore e algoritmo de coordenação.
