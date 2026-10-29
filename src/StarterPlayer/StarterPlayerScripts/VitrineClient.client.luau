@@ -3,6 +3,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
+local ShopGuide = require(ReplicatedStorage:WaitForChild("Shared"):WaitForChild("ShopGuide"))
 local player = Players.LocalPlayer
 local remotes = ReplicatedStorage:WaitForChild("VitrineRemotes")
 local actionEvent = remotes:WaitForChild("Action")
@@ -164,12 +165,46 @@ notice.BackgroundColor3 = C.card
 notice.Visible = false
 rounded(notice, 9)
 
-local opened = true
+local opened = false
+panel.Visible = false
 local latest = nil
 local lastInventorySignature = nil
 local showReport = false
 local compact = false
 local order = 0
+
+-- Um lembrete pequeno, que deixa a vista do mundo livre em vez de ocupar a tela toda.
+local guide = Instance.new("Frame")
+guide.Name = "Primeiros passos"
+guide.Size = UDim2.fromOffset(272, 119)
+guide.Position = UDim2.fromOffset(12, 65)
+guide.BackgroundColor3 = C.bg
+guide.BackgroundTransparency = 0.06
+guide.Parent = gui
+rounded(guide, 9)
+
+local guideTitle = text(guide, "Abra seu primeiro negócio", 28, 13, C.bright, true)
+guideTitle.Position = UDim2.fromOffset(10, 7)
+guideTitle.Size = UDim2.new(1, -20, 0, 28)
+local guideDetail = text(guide, "Procure uma loja disponível para alugar.", 48, 12, C.muted)
+guideDetail.Position = UDim2.fromOffset(10, 35)
+guideDetail.Size = UDim2.new(1, -20, 0, 48)
+local guideAction = button(guide, "ADMINISTRAR", C.green, function()
+    opened = true
+    panel.Visible = true
+    toggle.Text = "FECHAR X"
+    guide.Visible = false
+end)
+guideAction.Position = UDim2.fromOffset(10, 87)
+guideAction.Size = UDim2.new(1, -20, 0, 26)
+guideAction.TextSize = 11
+guideAction.Visible = false
+
+local function refreshGuideVisibility()
+    guide.Visible = latest ~= nil and not latest.loadError and
+        (not compact or not panel.Visible)
+end
+
 local function nextOrder(frame)
     order += 1
     frame.LayoutOrder = order
@@ -195,6 +230,7 @@ toggle.MouseButton1Click:Connect(function()
     opened = not opened
     panel.Visible = opened
     toggle.Text = opened and "FECHAR X" or "MINHA LOJA"
+    refreshGuideVisibility()
 end)
 
 local function adapt()
@@ -211,6 +247,7 @@ local function adapt()
         panel.Visible = false
         toggle.Text = "MINHA LOJA"
     end
+    refreshGuideVisibility()
 end
 local cameraConn
 local function connectCamera()
@@ -286,6 +323,7 @@ end
 local function render(state)
     latest = state
     if state.loadError then
+        guide.Visible = false
         heading.Text = "VITRINE CITY — DADOS INDISPONÍVEIS"
         summary.Text = state.loadError
         summary.TextColor3 = C.red
@@ -295,6 +333,11 @@ local function render(state)
         return
     end
     summary.TextColor3 = C.muted
+    local step = ShopGuide.Step(state.lot, state.products, state.analytics and state.analytics.sales or 0)
+    guideTitle.Text = step.title
+    guideDetail.Text = step.detail
+    guideAction.Visible = step.action == "manage"
+    refreshGuideVisibility()
     local event = state.market
     if event and event.title then
         marketNews.Text = "NOTÍCIA: " .. event.title .. "\n" .. (event.description or "")
@@ -330,6 +373,7 @@ local function render(state)
     local fingerprint = HttpService:JSONEncode({
         state.lot, state.hasEmployee, state.eliminated,
         state.products, state.bids, state.ranking, state.analytics, state.ledger,
+        state.recentSales,
         competitive, compact, showReport,
     })
     if fingerprint == lastInventorySignature then return end
@@ -383,6 +427,15 @@ local function render(state)
                 28, 12, C.muted))
         end
 
+        section("Últimas vendas realizadas")
+        if #(state.recentSales or {}) == 0 then
+            nextOrder(text(scroll, "A primeira venda aparecerá aqui.", 30, 12, C.muted))
+        else
+            for _, receipt in ipairs(state.recentSales) do
+                nextOrder(text(scroll, receipt.name .. "  |  Venda: $" .. receipt.price ..
+                    "  |  Margem bruta: $" .. receipt.margin, 30, 12, C.green))
+            end
+        end
         section("Despesas registradas")
         nextOrder(text(scroll,
             "Aluguel inicial: $" .. math.floor(ledger.lease or 0) ..
@@ -450,6 +503,7 @@ openShopEvent.OnClientEvent:Connect(function()
     opened = true
     panel.Visible = true
     toggle.Text = "FECHAR X"
+    refreshGuideVisibility()
     showReport = false
     lastInventorySignature = nil
     scroll.CanvasPosition = Vector2.new(0, 0)
