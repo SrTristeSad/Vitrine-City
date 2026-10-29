@@ -14,10 +14,12 @@ Jogo Roblox **original** em Luau. Uma rua comercial multiplayer com locação de
 8. Rua Livre salva via ProfileStore e `UpdateAsync` com lease e autosave; não ligar StudioPersistence para jogos publicados.
 9. Não sobrescrever dados reais em falha de carregamento nem misturar dados competitivos com perfis persistidos.
 10. Cada modo possui projeto Rojo próprio. O servidor determina o modo, nunca confie em argumentos do cliente.
-11. Competitivo publicado aceita apenas servidor reservado. Fila é local ao servidor do lobby; não declarar matchmaking global.
+11. Competitivo publicado aceita apenas servidor reservado. O módulo GlobalMatchmaker usa MemoryStore em ambiente publicado; fila local somente no Studio. Não declarar esse modo testado em múltiplos servidores antes de realizar teste real.
 12. IDs zero em ModeRoutes desativam teleportes. Nunca inventar PlaceIds.
 13. A Rua Livre salva o perfil antes de voltar ao Lobby. Falha de Save cancela teleporte, e falha de teleporte deve liberar o bloqueio de ações.
 14. O lobby rejeita nomes de modo não permitidos pelo servidor. Testar retornos reais no cliente Roblox, não apenas em Studio.
+15. Claims atômicos, nonce por usuário, ticket com TTL e confirmação de match ready são invariantes importantes do matchmaking global. Não substituir por fila local sem avisar.
+16. MemoryStore pode sofrer throttling; documentar vazão e consumo antes de aumentar frequência. Ver docs/MATCHMAKING_GLOBAL.md.
 
 ## Estrutura
 - `src/ReplicatedStorage/Shared`: Config, Catalog, Economy, Population.
@@ -26,7 +28,7 @@ Jogo Roblox **original** em Luau. Uma rua comercial multiplayer com locação de
 - `docs`: GDD, economia, monetização, testes.
 
 ## Próximo trabalho
-O lobby, os quatro Places e as filas **locais** já estão codificados. Prioridade: configurar os PlaceIds reais no ModeRoutes, publicar em experiência de teste e validar teleportes no cliente Roblox, além de corrigir erros reais do Studio e verificar DataStore. Depois, implementar matchmaking **global** (MemoryStore), reconexão e proteção de entrada tardia. Não adicionar seis modos superficiais antes de estabilizar o principal.
+O lobby, os quatro Places e o **matchmaking global beta** já estão codificados. Prioridade: configurar os PlaceIds reais no ModeRoutes, publicar em experiência de teste e validar teleportes no cliente Roblox, além de corrigir erros reais do Studio e verificar DataStore. Depois, validar matchmaking global com vários servidores Roblox e implementar reconexão, confirmação de chegada e proteção de entrada tardia. Não adicionar seis modos superficiais antes de estabilizar o principal.
 
 ## Padrão de entrega
 Em cada alteração: resumo do comportamento, arquivos alterados, testes efetivamente rodados e limitações. Proteger eventos remotos contra dados falsificados e compras duplicadas. Documentar qualquer mudança de configuração econômica em `docs/ECONOMIA.md`.
