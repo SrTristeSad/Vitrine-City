@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Lightweight source/configuration checks. DOES NOT compile Luau or replace Studio playtests."""
+"""Static project checks. Luau compilation is handled separately in CI; Studio playtests remain mandatory."""
 import json
 from pathlib import Path
 import re
@@ -10,6 +10,7 @@ tree = project["tree"]
 assert tree["$className"] == "DataModel"
 assert tree["ReplicatedStorage"]["Shared"]["$path"] == "src/ReplicatedStorage/Shared"
 assert tree["ServerScriptService"]["VitrineServer"]["$path"].endswith(".server.luau")
+assert tree["ServerScriptService"]["ProfileStore"]["$path"].endswith("ProfileStore.luau")
 assert tree["StarterPlayer"]["StarterPlayerScripts"]["VitrineClient"]["$path"].endswith(".client.luau")
 
 sources = [
@@ -18,6 +19,7 @@ sources = [
     "src/ReplicatedStorage/Shared/Economy.luau",
     "src/ReplicatedStorage/Shared/Population.luau",
     "src/ServerScriptService/VitrineServer.server.luau",
+    "src/ServerScriptService/ProfileStore.luau",
     "src/StarterPlayer/StarterPlayerScripts/VitrineClient.client.luau",
 ]
 for source in sources:
@@ -33,6 +35,7 @@ economy = (root / sources[2]).read_text(encoding="utf-8")
 population = (root / sources[3]).read_text(encoding="utf-8")
 server = (root / sources[4]).read_text(encoding="utf-8")
 client = (root / sources[5]).read_text(encoding="utf-8")
+profiles = (root / sources[6]).read_text(encoding="utf-8")
 for name in ("NewNeed", "PickOffer", "NetWorth"):
     assert f"function Economy.{name}" in economy
 for name in ("Create", "StartPurchase", "FinishPurchase", "Hire", "PayWorker", "Layoff", "StartDay", "Stats"):
@@ -48,5 +51,10 @@ assert "person.wallet < price" in server
 assert "account.cash -= cost" in server
 assert "Population.FinishPurchase" in server
 assert "Population.PayWorker" in server
+assert "ProfileStore.Load" in server and "ProfileStore.Save" in server and "ProfileStore.Release" in server
+assert "ProfileStore" in profiles and "UpdateAsync" in profiles
+assert "RunService:IsStudio()" in profiles and "Config.StudioPersistence" in profiles
+assert "Config.AutosaveSeconds" in server
+assert "state.loadError" in client and "state.persistence" in client
 print("PASS: Rojo mappings, module references, six unique items and basic economy invariants.")
-print("NOTE: Luau compilation and Roblox Studio runtime tests still required.")
+print("NOTE: CI compiles Luau separately; Roblox Studio runtime / DataStore integration tests still required.")
