@@ -37,6 +37,13 @@ Alugar ponto -> comprar estoque -> colocar na prateleira -> definir preço -> ob
 - Com pelo menos dois participantes e após período de entrada, se só uma empresa sobreviver a rodada termina. Limite de tempo aplica critério de sobrevivência e patrimônio.
 - Este modo já tem regra básica, mas falta balanceamento e teste com múltiplos clientes.
 
+## Relatórios de comércio — v0.7
+- Cada visita concluída à loja registra categoria procurada; venda confirmada registra produto, receita e custo.
+- Perdas distinguem falta de estoque, mercadoria sem reposição, preço acima do orçamento, oferta alterada e falha não classificada.
+- Relatório separado do estoque apresenta conversão, vendas por produto, lucro bruto e despesas. Sugestões surgem do motivo predominante de perdas.
+- KPIs da loja são salvos na Rua Livre, com restauração de perfis antigos e descarte em falência; competitivo reinicia os indicadores por rodada.
+- A mudança de proprietário durante a visita não conta para o novo dono; detalhe em `docs/RELATORIOS_COMERCIAIS.md`.
+
 ## Eventos econômicos — v0.6
 - Notícias periódicas alteram chance de demanda e volume de remessas no competitivo, não o estoque dos jogadores.
 - Cinco eventos iniciais: dia comum, leite em falta, festival da moda, safra abundante e manhã na padaria.
