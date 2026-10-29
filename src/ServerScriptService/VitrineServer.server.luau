@@ -104,8 +104,9 @@ end
 
 local function updateSign(lot)
     local owner = lot.ownerId and Players:GetPlayerByUserId(lot.ownerId)
-    lot.label.Text = owner and ("VITRINE " .. string.format("%02d", lot.id) .. " | " .. owner.DisplayName)
-        or ("VITRINE " .. string.format("%02d", lot.id) .. " | ALUGUE AQUI")
+    local title = (lot.theme and lot.theme.name or "VITRINE") .. " " .. string.format("%02d", lot.id)
+    lot.label.Text = owner and (title .. "  |  " .. owner.DisplayName)
+        or (title .. "  |  ALUGUE AQUI")
     if lot.statusLamp then
         lot.statusLamp.Color = owner and Color3.fromRGB(83, 209, 139) or Color3.fromRGB(250, 194, 87)
     end
@@ -149,7 +150,7 @@ local function makeMap()
             prompt.Parent = door
             local lot = {
                 id = id, x = x, z = z, side = side, model = model, door = door,
-                prompt = prompt, label = shell.signLabel, statusLamp = shell.statusLamp,
+                prompt = prompt, label = shell.signLabel, statusLamp = shell.statusLamp, theme = shell.theme,
                 ownerId = nil, employeeId = nil, employeeModel = nil,
                 leaseVersion = 0, analytics = ShopAnalytics.New(),
                 stock = {}, shelf = {}, prices = {}, costValue = {}, displays = {},
