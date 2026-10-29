@@ -20,6 +20,9 @@ Instalar Roblox Studio e Rojo 7 no computador; `rojo build default.project.json 
 ## Testes de persistência
 Use **experiência de teste separada da produção**, porque a Roblox recomenda não habilitar acesso do Studio aos dados de produção. Testar salvamentos após a janela de 45 s, saída imediata e falha simulada, conferindo o estado entre sessões. Verificar que a trava de sessão expira após falha de servidor (aprox. 180 segundos), sem garantia de recuperação instantânea. Documentar prints/logs do Output.
 
+## Matchmaking global beta
+Reunir 2 a 8 jogadores **em lobbies de servidores diferentes** numa experiência de teste publicada, confirmar mesmo GUID de servidor reservado para todos, conferir tickets com prazo de validade, cancelamentos e comportamento após falha de MemoryStore. Validar por logs reais e Dashboard. Roteiro em `docs/MATCHMAKING_GLOBAL.md`.
+
 ## Lobby e quatro Places
 Ver `docs/MODOS_LOBBY.md`. Abrir os quatro arquivos compilados no Studio, conferir a saída e a interface mobile. Configurar PlaceIds reais em uma experiência de teste com quatro Places; testar no **cliente Roblox** entrada solo na Rua Livre, partidas de 2 a 8 pessoas em servidores reservados, cancelamento, desconexão e falhas de teleporte. O Studio não executa teletransportes.
 
