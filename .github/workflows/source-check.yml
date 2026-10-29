@@ -1,4 +1,4 @@
-name: Source checks
+name: Source checks and Rojo build
 
 on:
   push:
@@ -11,5 +11,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Validate Rojo and source references
+      - name: Validate Rojo mappings and source references
         run: python3 tests/check_project.py
+      - name: Install Rojo 7.7.1
+        run: |
+          curl -fLsS https://github.com/rojo-rbx/rojo/releases/download/v7.7.1/rojo-7.7.1-linux-x86_64.zip -o /tmp/rojo.zip
+          mkdir -p /tmp/rojo-cli
+          unzip -q /tmp/rojo.zip -d /tmp/rojo-cli
+          chmod +x /tmp/rojo-cli/rojo
+          echo "/tmp/rojo-cli" >> "$GITHUB_PATH"
+      - name: Build Roblox place
+        run: rojo build default.project.json -o VitrineCity.rbxlx
+      - name: Save playable Studio place artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VitrineCity-place
+          path: VitrineCity.rbxlx
+          retention-days: 30
