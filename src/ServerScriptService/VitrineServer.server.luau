@@ -16,6 +16,7 @@ local MarketEvents = require(Shared:WaitForChild("MarketEvents"))
 local ShopAnalytics = require(Shared:WaitForChild("ShopAnalytics"))
 local CustomerRoute = require(Shared:WaitForChild("CustomerRoute"))
 local CustomerMotion = require(Shared:WaitForChild("CustomerMotion"))
+local WorkerPlanner = require(Shared:WaitForChild("WorkerPlanner"))
 local ProfileStore = require(script.Parent:WaitForChild("ProfileStore"))
 local StoreVisuals = require(script.Parent:WaitForChild("StoreVisuals"))
 local Routes = require(ReplicatedStorage:WaitForChild("ModeRoutes"))
@@ -172,6 +173,7 @@ local function makeMap()
                 label = shell.signLabel, statusLamp = shell.statusLamp, theme = shell.theme,
                 ownerId = nil, employeeId = nil, employeeModel = nil,
                 leaseVersion = 0, analytics = ShopAnalytics.New(), receipts = {},
+                workerBusy = false, workerProductId = nil,
                 stock = {}, shelf = {}, prices = {}, costValue = {}, displays = {},
                 missedBills = 0, reputation = 50,
             }
@@ -223,6 +225,17 @@ local function npcModel(name, x, z, employee)
     local statusLabel = sign(root, name, Vector3.new(0, 3.6, 0))
     statusLabel.Name = "StatusCliente"
     return model
+end
+
+local function createEmployee(lot)
+    local x, z = CustomerRoute.StaffHome(lot)
+    local worker = npcModel("Repositor | disponível", x, z, true)
+    -- Uma caixa de mercadorias de geometria simples acompanha o repositor.
+    local crate = part(worker, "Caixa de reposição", Vector3.new(1.25, 0.85, 1.0),
+        Vector3.new(x, 3.3, z - 1.0), Color3.fromRGB(181, 134, 82))
+    crate.CanCollide = false
+    crate.Transparency = 1
+    return worker
 end
 
 local function moveNpc(model, x, z, seconds)
@@ -301,6 +314,7 @@ local function restock(lot, id)
 end
 
 local function resetLot(lot)
+    lot.workerBusy, lot.workerProductId = false, nil
     lot.leaseVersion += 1
     lot.saleSerial += 1
     lot.checkoutLabel.Visible = false
@@ -389,7 +403,7 @@ local function rent(player, lot)
             local id = Population.Hire(population, lot.id)
             if id then
                 lot.employeeId = id
-                lot.employeeModel = npcModel("Repositor", lot.x - 10, lot.z, true)
+                lot.employeeModel = createEmployee(lot)
             end
         end
         savedShops[player.UserId] = nil
@@ -787,7 +801,7 @@ local function handleAction(player, action, payload)
         account.expenses += Config.EmployeeHireCost
         account.ledger.hire += Config.EmployeeHireCost
         lot.employeeId = id
-        lot.employeeModel = npcModel("Repositor", lot.x - 10, lot.z, true)
+        lot.employeeModel = createEmployee(lot)
         message(player, "Repositor contratado: ele recebe salário e consome na cidade.")
     elseif action == "Buy" and product then
         local qty = 5
