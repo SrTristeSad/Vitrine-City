@@ -16,6 +16,8 @@ Jogo Roblox **original** em Luau. Uma rua comercial multiplayer com locação de
 10. Cada modo possui projeto Rojo próprio. O servidor determina o modo, nunca confie em argumentos do cliente.
 11. Competitivo publicado aceita apenas servidor reservado. Fila é local ao servidor do lobby; não declarar matchmaking global.
 12. IDs zero em ModeRoutes desativam teleportes. Nunca inventar PlaceIds.
+13. A Rua Livre salva o perfil antes de voltar ao Lobby. Falha de Save cancela teleporte, e falha de teleporte deve liberar o bloqueio de ações.
+14. O lobby rejeita nomes de modo não permitidos pelo servidor. Testar retornos reais no cliente Roblox, não apenas em Studio.
 
 ## Estrutura
 - `src/ReplicatedStorage/Shared`: Config, Catalog, Economy, Population.
