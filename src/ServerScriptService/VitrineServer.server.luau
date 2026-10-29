@@ -408,7 +408,8 @@ end
 
 local function replenishSupplier()
     for _, p in ipairs(Catalog.List) do
-        supplier[p.id] += p.shipment
+        -- Limitar estoque encalhado para não gerar números sem fim em servidores longos.
+        supplier[p.id] = math.min(p.initialSupply * 3, supplier[p.id] + p.shipment)
         settleBids(p)
     end
 end
@@ -465,6 +466,7 @@ local function endRound(reason)
         return a.value > b.value
     end)
     local winner = ranking[1]
+    if Config.Mode == "price_war" and winner and winner.eliminated then winner = nil end
     for _, player in ipairs(Players:GetPlayers()) do
         message(player, winner and ("Rodada " .. round .. ": " .. winner.player.DisplayName .. " venceu! " .. reason) or ("Rodada encerrada. " .. reason))
     end
