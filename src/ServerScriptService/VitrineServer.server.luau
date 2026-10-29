@@ -313,6 +313,8 @@ local function restock(lot, id)
     return move
 end
 
+local sendState -- referência antecipada para concluir a reposição no cliente
+
 -- Funcionário agora faz uma visita física à prateleira ANTES de mover estoque.
 -- No máximo um serviço por loja, independente dos ciclos do servidor.
 local function workEmployee(lot)
@@ -459,7 +461,7 @@ local function rent(player, lot)
         ("Loja " .. lot.id .. " alugada! Compre mercadorias, reponha e defina os preços."))
 end
 
-local function sendState(player)
+sendState = function(player)
     local account = accounts[player.UserId]
     if not account then return end
     local lot = getLot(player.UserId)
