@@ -35,6 +35,9 @@
         },
         "CustomerMotion": {
           "$path": "src/ReplicatedStorage/Shared/CustomerMotion.luau"
+        },
+        "WorkerPlanner": {
+          "$path": "src/ReplicatedStorage/Shared/WorkerPlanner.luau"
         }
       },
       "ModeRoutes": {
