@@ -125,7 +125,8 @@ local function write(userId, profile, catalog, release)
         if attempt < 2 then task.wait(1) end
     end
     saving[userId] = nil
-    return ok, ok and nil or reason
+    if ok then return true, nil end
+    return false, reason
 end
 
 function ProfileStore.Save(userId, profile, catalog)
