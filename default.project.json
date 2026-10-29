@@ -4,18 +4,29 @@
     "$className": "DataModel",
     "ReplicatedStorage": {
       "$className": "ReplicatedStorage",
-      "Shared": { "$path": "src/ReplicatedStorage/Shared" }
+      "Shared": {
+        "$path": "src/ReplicatedStorage/Shared"
+      },
+      "ModeRoutes": {
+        "$path": "src/ReplicatedStorage/ModeRoutes.luau"
+      }
     },
     "ServerScriptService": {
       "$className": "ServerScriptService",
-      "VitrineServer": { "$path": "src/ServerScriptService/VitrineServer.server.luau" },
-      "ProfileStore": { "$path": "src/ServerScriptService/ProfileStore.luau" }
+      "VitrineServer": {
+        "$path": "src/ServerScriptService/VitrineServer.server.luau"
+      },
+      "ProfileStore": {
+        "$path": "src/ServerScriptService/ProfileStore.luau"
+      }
     },
     "StarterPlayer": {
       "$className": "StarterPlayer",
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
-        "VitrineClient": { "$path": "src/StarterPlayer/StarterPlayerScripts/VitrineClient.client.luau" }
+        "VitrineClient": {
+          "$path": "src/StarterPlayer/StarterPlayerScripts/VitrineClient.client.luau"
+        }
       }
     }
   }
