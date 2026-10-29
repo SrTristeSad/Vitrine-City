@@ -3,6 +3,9 @@
 ## Primeira loja e confirmação de venda — v1.0-preview
 Abrir Rua Livre no Studio com painel inicialmente fechado; verificar guia, aluguel, compra de 5 unidades, reposição e primeira venda. Conferir confirmação monetária e cinco recibos no relatório, sem duplicar caixa ou vendas. Executar tests/shop_guide.spec.luau no CI; roteiro em docs/PRIMEIRA_LOJA.md.
 
+## Repositor ativo e produtos comerciais — v1.2
+Usar docs/REPOSITOR_V12.md: contratar repositor, abastecer só depois de chegar à gôndola, verificar uma tarefa por funcionário, retorno ao caixa, trabalho interrompido por falência e painel indicando estado. Avaliar materiais dos produtos e FPS no Android. Executar tests/worker_planner.spec.luau no CI.
+
 ## Movimento de clientes e feedback no caixa — v1.1
 Executar o roteiro em docs/CLIENTES_MOVIMENTO_V11.md. Conferir NPCs virando/andando de forma contínua, pose neutra nas paradas, braços e pernas com oscilação, recibo visual +$ no caixa após venda e atualização do saldo sem aguardar 5 segundos. Verificar FPS no Android. Executar tests/customer_motion.spec.luau no CI.
 
