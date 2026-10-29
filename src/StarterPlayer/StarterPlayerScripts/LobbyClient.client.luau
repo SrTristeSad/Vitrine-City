@@ -170,8 +170,9 @@ local function update(data)
         local info = data.modes[meta.id]
         if info then
             local status = info.configured and (meta.id == "normal" and "Salvamento persistente após publicação"
-                or (info.waiting .. "/" .. info.maxPlayers .. " aguardando"
-                    .. (info.remaining and (" | Começa em " .. info.remaining .. "s") or "")))
+                or (data.globalQueue and ("Fila GLOBAL • aprox. " .. info.waiting .. " aguardando")
+                    or (info.waiting .. "/" .. info.maxPlayers .. " neste lobby"
+                        .. (info.remaining and (" | Começa em " .. info.remaining .. "s") or ""))))
                 or "Aguardando configuração do PlaceId"
             if data.localTest and info.configured then status = status .. " | Studio sem teleporte" end
             row.status.Text = status
