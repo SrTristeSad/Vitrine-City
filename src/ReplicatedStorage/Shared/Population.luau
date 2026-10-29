@@ -40,12 +40,12 @@ function Population.Create(count, rng)
     return world
 end
 
-function Population.StartPurchase(world, catalog, economy, rng)
+function Population.StartPurchase(world, catalog, economy, rng, event, marketEvents)
     -- O cliente só aparece se houver orçamento; nunca reserva dinheiro em duplicidade.
     for _ = 1, 18 do
         local person = world.people[rng:NextInteger(1, #world.people)]
         if not person.busy then
-            local need = economy.NewNeed(catalog, rng)
+            local need = economy.NewNeed(catalog, rng, event, marketEvents)
             need.budget = math.min(need.budget, math.floor(person.wallet * 0.65))
             if need.budget >= 5 then
                 person.busy = true
