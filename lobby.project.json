@@ -12,6 +12,9 @@
       "$className": "ServerScriptService",
       "LobbyServer": {
         "$path": "src/ServerScriptService/LobbyServer.server.luau"
+      },
+      "GlobalMatchmaker": {
+        "$path": "src/ServerScriptService/GlobalMatchmaker.luau"
       }
     },
     "StarterPlayer": {
