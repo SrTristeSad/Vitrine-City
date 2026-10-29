@@ -6,6 +6,12 @@ Começar numa pequena loja de rua e aprender a operar um negócio. Os jogadores 
 ## Loop principal
 Alugar ponto -> comprar estoque -> colocar na prateleira -> definir preço -> observar cliente -> receber venda -> pagar contas -> expandir / ajustar mix de produtos.
 
+## Lobby — v0.3
+- Três quiosques e interface de seleção de modos.
+- Fila competitiva local com 2 a 8 jogadores, contagem de 12 segundos e partidas reservadas independentes.
+- PlaceIds exigem configuração antes do lançamento. Teleporte ainda não testado em ambiente publicado.
+- Ver `docs/MODOS_LOBBY.md`.
+
 ## Modo normal — Rua Livre
 - Sem concorrência real pela mesma compra: consumidor procura primeiro um estabelecimento sorteado.
 - Atacado ilimitado, ritmo casual, fechamento com possibilidade de recomeço.
