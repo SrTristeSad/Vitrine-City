@@ -21,6 +21,9 @@
         "Population": {
           "$path": "src/ReplicatedStorage/Shared/Population.luau"
         }
+      },
+      "ModeRoutes": {
+        "$path": "src/ReplicatedStorage/ModeRoutes.luau"
       }
     },
     "ServerScriptService": {
