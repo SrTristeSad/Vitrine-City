@@ -231,7 +231,7 @@ function StoreVisuals.BuildStore(model, id, x, z, side, makePart)
         Color3.fromRGB(155, 110, 72), Enum.Material.WoodPlanks)
     block(model, makePart, "Tampo do balcão", Vector3.new(5.1, 0.22, 2.45),
         Vector3.new(x + 10.1, 2.53, front + side * 4.7), C.stone, Enum.Material.Marble)
-    block(model, makePart, "Caixa registradora", Vector3.new(1.5, 0.8, 1.25),
+    local cashRegister = block(model, makePart, "Caixa registradora", Vector3.new(1.5, 0.8, 1.25),
         Vector3.new(x + 10.2, 3.04, front + side * 4.7), frame, Enum.Material.Metal, false)
     local screen = block(model, makePart, "Monitor do caixa", Vector3.new(1.25, 0.45, 0.12),
         Vector3.new(x + 10.2, 3.2, front + side * 4.03), Color3.fromRGB(101, 197, 178),
@@ -248,6 +248,7 @@ function StoreVisuals.BuildStore(model, id, x, z, side, makePart)
         door = door,
         signLabel = title,
         statusLamp = lamp,
+        cashRegister = cashRegister,
         theme = theme,
         front = front,
     }
