@@ -12,6 +12,7 @@ Simulador econômico original em **Roblox (Luau)**. Jogadores alugam pontos come
 - **Relatórios da loja:** conversão de visitas, perdas por preço/estoque, produtos procurados, vendas por item e despesas por categoria.
 - **Clientes visitam lojas de verdade:** entram pela vitrine, examinam as gôndolas, seguem ao caixa e saem com a sacola após a compra. O dono administra o negócio também pela caixa registradora física.
 - **Primeiros passos e vendas visíveis:** guia discreto de aluguel, compra e reposição; painel abre após alugar, notificações e cinco recibos recentes de vendas reais.
+- **Clientes animados:** viram-se antes de caminhar, movimentam braços/pernas levemente e mostram o valor da venda acima do caixa, com saldo atualizado de imediato.
 - **Monetização justa:** cosméticos, sem vender vantagens econômicas no ranqueado.
 
 ## Início
@@ -26,7 +27,7 @@ rojo build price_war.project.json -o VitrineCity-GuerraDePrecos.rbxlx
 
 Abra cada arquivo `.rbxlx` no Roblox Studio para testar o mapa gerado por scripts. O GitHub Actions também cria os quatro arquivos em um único artefato.
 
-O GitHub Actions verifica a sintaxe Luau, valida a estrutura e disponibiliza o artefato `VitrineCity-Places` com os quatro lugares compilados. A v0.6 também evita redesenhar cartões de inventário quando seus dados não mudaram. Na v0.7, o workflow passou a executar testes de indicadores econômicos em interpretador Luau. Confira [eventos econômicos](docs/EVENTOS_MERCADO.md), [relatórios comerciais](docs/RELATORIOS_COMERCIAIS.md) e a [reforma visual das lojas](docs/REFORMA_VISUAL_LOJAS.md) e [percursos NPC e caixa interativo](docs/CLIENTES_E_CAIXA.md) e [guia da primeira loja](docs/PRIMEIRA_LOJA.md). Esses testes não substituem testes de execução no Studio.
+O GitHub Actions verifica a sintaxe Luau, valida a estrutura e disponibiliza o artefato `VitrineCity-Places` com os quatro lugares compilados. A v0.6 também evita redesenhar cartões de inventário quando seus dados não mudaram. Na v0.7, o workflow passou a executar testes de indicadores econômicos em interpretador Luau. Confira [eventos econômicos](docs/EVENTOS_MERCADO.md), [relatórios comerciais](docs/RELATORIOS_COMERCIAIS.md) e a [reforma visual das lojas](docs/REFORMA_VISUAL_LOJAS.md) e [percursos NPC e caixa interativo](docs/CLIENTES_E_CAIXA.md) e [guia da primeira loja](docs/PRIMEIRA_LOJA.md) e [movimento dos NPCs v1.1](docs/CLIENTES_MOVIMENTO_V11.md). Esses testes não substituem testes de execução no Studio.
 
 ### Lobby e partidas reservadas
 O lobby dispõe de três quiosques. Para publicar, configure os **quatro** PlaceIds (incluindo Lobby) em `src/ReplicatedStorage/ModeRoutes.luau` (**0 significa desabilitado**) e publique os quatro Places **na mesma experiência Roblox**. O Lobby deve ser a entrada principal. Os modos competitivos usam **matchmaking global beta**, permitindo reunir 2–8 jogadores de lobbies diferentes através de `MemoryStoreService` e partidas reservadas por `TeleportService`. No Roblox Studio permanece uma fila local para testes. Consulte [matchmaking global](docs/MATCHMAKING_GLOBAL.md). Todas as lojas possuem **VOLTAR AO LOBBY**, com confirmação e salvamento prévio na Rua Livre. Veja [o guia do lobby](docs/MODOS_LOBBY.md). Teleportes não funcionam no Studio.
