@@ -30,6 +30,7 @@ sources = [
     "src/ReplicatedStorage/Shared/Config.luau",
     "src/ReplicatedStorage/Shared/Catalog.luau",
     "src/ReplicatedStorage/Shared/CustomerRoute.luau",
+    "src/ReplicatedStorage/Shared/ShopGuide.luau",
     "src/ReplicatedStorage/Shared/MarketEvents.luau",
     "src/ReplicatedStorage/Shared/ShopAnalytics.luau",
     "src/ReplicatedStorage/Shared/Economy.luau",
@@ -98,6 +99,17 @@ assert (root / "tests/customer_route.spec.luau").exists()
 for path in ("ranked.project.json", "price_war.project.json"):
     shared = json.loads((root / path).read_text(encoding="utf-8"))["tree"]["ReplicatedStorage"]["Shared"]
     assert shared["CustomerRoute"]["$path"].endswith("CustomerRoute.luau")
+assert 'ShopGuide.Step' in client
+assert 'refreshGuideVisibility()' in client
+assert 'local opened = false' in client
+assert 'openShopEvent:FireClient(player)' in server
+assert 'VENDA REALIZADA' in server
+assert 'recentSales = lot and lot.receipts' in server
+assert 'state.recentSales' in client
+assert (root / "tests/shop_guide.spec.luau").exists()
+for mode_path in ("ranked.project.json", "price_war.project.json"):
+    shared = json.loads((root / mode_path).read_text(encoding="utf-8"))["tree"]["ReplicatedStorage"]["Shared"]
+    assert shared["ShopGuide"]["$path"].endswith("ShopGuide.luau")
 assert "Config.MaxVisibleCustomers" in server
 assert "person.wallet < price" in server
 assert "account.cash -= cost" in server
