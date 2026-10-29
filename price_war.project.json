@@ -1,0 +1,45 @@
+{
+  "name": "VitrineCityPriceWar",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Shared": {
+        "$className": "Folder",
+        "Config": {
+          "$path": "src/ReplicatedStorage/Shared/Configs/PriceWar.luau"
+        },
+        "BaseConfig": {
+          "$path": "src/ReplicatedStorage/Shared/Config.luau"
+        },
+        "Catalog": {
+          "$path": "src/ReplicatedStorage/Shared/Catalog.luau"
+        },
+        "Economy": {
+          "$path": "src/ReplicatedStorage/Shared/Economy.luau"
+        },
+        "Population": {
+          "$path": "src/ReplicatedStorage/Shared/Population.luau"
+        }
+      }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "VitrineServer": {
+        "$path": "src/ServerScriptService/VitrineServer.server.luau"
+      },
+      "ProfileStore": {
+        "$path": "src/ServerScriptService/ProfileStore.luau"
+      }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "VitrineClient": {
+          "$path": "src/StarterPlayer/StarterPlayerScripts/VitrineClient.client.luau"
+        }
+      }
+    }
+  }
+}
