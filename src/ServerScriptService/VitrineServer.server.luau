@@ -262,7 +262,8 @@ local function npcModel(name, x, z, employee)
         local limb = part(model, piece[1], piece[2], Vector3.new(x, 3, z) + piece[3], piece[4])
         limb.CanCollide = false
     end
-    sign(root, name, Vector3.new(0, 3.6, 0))
+    local statusLabel = sign(root, name, Vector3.new(0, 3.6, 0))
+    statusLabel.Name = "StatusCliente"
     return model
 end
 
@@ -474,6 +475,15 @@ local function generateCustomer()
             task.wait(0.35)
             if round == startedRound and offer.product then
                 bought = sale(target, offer.product, offer.price, owner, person)
+            end
+            if bought and offer.product then
+                local signGui = npc.PrimaryPart:FindFirstChild("Letreiro")
+                local statusLabel = signGui and signGui:FindFirstChild("StatusCliente")
+                if statusLabel then statusLabel.Text = "COMPROU: " .. offer.product.name end
+                local pos = npc:GetPivot().Position
+                local bag = part(npc, "Sacola de compras", Vector3.new(1.05, 1.2, 0.75),
+                    pos + Vector3.new(1.4, -0.6, 0), Color3.fromRGB(235, 201, 133))
+                bag.CanCollide = false
             end
             if not bought and round == startedRound and target.ownerId == owner then
                 target.reputation = math.max(10, target.reputation - 0.12)
