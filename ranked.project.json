@@ -26,6 +26,9 @@
         },
         "ShopAnalytics": {
           "$path": "src/ReplicatedStorage/Shared/ShopAnalytics.luau"
+        },
+        "CustomerRoute": {
+          "$path": "src/ReplicatedStorage/Shared/CustomerRoute.luau"
         }
       },
       "ModeRoutes": {
