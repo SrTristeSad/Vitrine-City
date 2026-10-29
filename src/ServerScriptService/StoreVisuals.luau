@@ -163,6 +163,31 @@ function StoreVisuals.BuildStore(model, id, x, z, side, makePart)
             Vector3.new(x + direction * 14.1, 4.5, front - side * 0.08), frame, Enum.Material.Metal, false)
         block(model, makePart, "Divisor interno", Vector3.new(0.24, 8.4, 0.4),
             Vector3.new(x + direction * 3.55, 4.5, front - side * 0.08), frame, Enum.Material.Metal, false)
+
+        -- Cenografia da vitrine (AMOSTRA, não estoque comercial): exposição já visível
+        -- antes do primeiro aluguel. Fica atrás do vidro, sem obstruir a porta central.
+        local displayZ = front + side * 2.8
+        block(model, makePart, "Pedestal de vitrine", Vector3.new(7.4, 0.9, 2.5),
+            Vector3.new(wx, 0.7, displayZ), Color3.fromRGB(222, 210, 188),
+            Enum.Material.WoodPlanks, false)
+        if direction == -1 then
+            block(model, makePart, "Manequim torso", Vector3.new(1.6, 2.7, 0.9),
+                Vector3.new(wx, 3.1, displayZ), theme.accent,
+                Enum.Material.SmoothPlastic, false)
+            local head = block(model, makePart, "Manequim cabeça", Vector3.new(1.25, 1.25, 1.25),
+                Vector3.new(wx, 5.2, displayZ), Color3.fromRGB(214, 194, 171),
+                Enum.Material.SmoothPlastic, false)
+            head.Shape = Enum.PartType.Ball
+            block(model, makePart, "Manequim suporte", Vector3.new(0.27, 0.85, 0.27),
+                Vector3.new(wx, 1.5, displayZ), C.steel, Enum.Material.Metal, false)
+        else
+            for n = -1, 1 do
+                block(model, makePart, "Embalagem cenográfica de vitrine",
+                    Vector3.new(1.6, 1.8 + (n == 0 and 0.55 or 0), 1.2),
+                    Vector3.new(wx + n * 2, 2.15 + (n == 0 and 0.3 or 0), displayZ),
+                    n == 0 and theme.accent or C.white, Enum.Material.SmoothPlastic, false)
+            end
+        end
     end
     -- Porta de vidro decorativa e SEM colisão para preservar a entrada NPC/jogador.
     block(model, makePart, "Vergas da entrada", Vector3.new(7, 1.3, 0.75),
