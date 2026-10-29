@@ -6,6 +6,7 @@ local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 local ProfileStore = {}
 local Config = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Config"))
+local ShopAnalytics = require(game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("ShopAnalytics"))
 local VERSION = 1
 local KEY_PREFIX = "player_v1_"
 local LEASE_SECONDS = 180
@@ -18,10 +19,20 @@ local function money(v, fallback)
     return math.clamp(math.floor(v), 0, 1000000000)
 end
 
+local LEDGER_KEYS = { "lease", "rent", "wages", "hire", "cogs", "writeoff" }
+local function cleanLedger(raw)
+    local result = {}
+    for _, key in ipairs(LEDGER_KEYS) do
+        result[key] = money(typeof(raw) == "table" and raw[key] or nil, 0)
+    end
+    return result
+end
+
 local function cleanShop(shop, catalog)
     if typeof(shop) ~= "table" then return nil end
     local result = { stock = {}, shelf = {}, costValue = {}, prices = {}, reputation = 50, hasEmployee = shop.hasEmployee == true }
     result.reputation = math.clamp(money(shop.reputation, 50), 10, 100)
+    result.analytics = ShopAnalytics.Restore(shop.analytics, catalog)
     for _, item in ipairs(catalog.List) do
         local id = item.id
         result.stock[id] = math.clamp(money(shop.stock and shop.stock[id], 0), 0, 100000)
@@ -41,6 +52,7 @@ local function cleanProfile(raw, catalog)
         expenses = money(raw.expenses, 0),
         sales = money(raw.sales, 0),
         penalties = money(raw.penalties, 0),
+        ledger = cleanLedger(raw.ledger),
         shop = cleanShop(raw.shop, catalog),
     }
 end
