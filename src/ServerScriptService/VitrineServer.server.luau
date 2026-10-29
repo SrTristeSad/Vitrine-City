@@ -113,14 +113,36 @@ local function refreshShelf(lot)
         if not display then
             local x = lot.x + ((idx - 1) % 3 - 1) * 7
             local z = lot.z + (math.floor((idx - 1) / 3) - 0.5) * 7
-            local stand = part(lot.model, "Prateleira", Vector3.new(5.8, 1, 4.6), Vector3.new(x, 1.1, z), Color3.fromRGB(87, 94, 103))
-            local goods = part(lot.model, product.name, Vector3.new(4.8, 1, 3.6), Vector3.new(x, 2.2, z), product.color)
-            goods.CanCollide = false
-            display = { goods = goods, text = sign(stand, "", Vector3.new(0, 3, 0)) }
+            local stand = part(lot.model, "Prateleira " .. product.name,
+                Vector3.new(5.8, 1, 4.6), Vector3.new(x, 1.1, z),
+                Color3.fromRGB(87, 94, 103))
+            local goods = {}
+            for i = 1, 3 do
+                local size = Vector3.new(1.45, 1.1, 1.5)
+                local baseY = 2.25
+                if product.category == "roupa" then
+                    size = Vector3.new(1.35, 1.5, 0.65)
+                    baseY = 2.42
+                elseif product.category == "pao" then
+                    size = Vector3.new(1.3, 0.8, 1.3)
+                    baseY = 2.2
+                end
+                local piece = part(lot.model, product.name .. " #" .. i, size,
+                    Vector3.new(x + (i - 2) * 1.6, baseY, z),
+                    product.color)
+                piece.CanCollide = false
+                if product.category == "pao" then
+                    piece.Shape = Enum.PartType.Ball
+                end
+                goods[i] = piece
+            end
+            display = { goods = goods, text = sign(stand, "", Vector3.new(0, 3.2, 0)) }
             lot.displays[product.id] = display
         end
         local qty = lot.shelf[product.id] or 0
-        display.goods.Transparency = qty > 0 and 0 or 1
+        for i, piece in ipairs(display.goods) do
+            piece.Transparency = qty >= i and 0 or 1
+        end
         display.text.Text = product.name .. "\n$" .. lot.prices[product.id] .. " | " .. qty .. " un."
     end
 end
@@ -130,6 +152,32 @@ local function makeMap()
     part(map, "Rua", Vector3.new(210, 0.2, 28), Vector3.new(0, 0, 0), Color3.fromRGB(55, 62, 71))
     for i = -4, 4 do
         part(map, "Faixa", Vector3.new(8, 0.04, 0.35), Vector3.new(i * 23, 0.14, 0), Color3.fromRGB(246, 214, 121))
+    end
+    -- Decoração estática de baixo custo: postes e árvores, sem luz dinâmica.
+    for _, x in ipairs({ -87, -43, 0, 43, 87 }) do
+        for _, side in ipairs({ -1, 1 }) do
+            local trunk = part(map, "Tronco urbano",
+                Vector3.new(1.3, 6.2, 1.3), Vector3.new(x, 3.1, side * 22.4),
+                Color3.fromRGB(120, 82, 54))
+            trunk.Shape = Enum.PartType.Cylinder
+            trunk.CanCollide = false
+            local canopy = part(map, "Copa",
+                Vector3.new(7, 6, 7), Vector3.new(x, 8.5, side * 22.4),
+                Color3.fromRGB(73, 151, 91))
+            canopy.Shape = Enum.PartType.Ball
+            canopy.CanCollide = false
+        end
+    end
+    for _, x in ipairs({ -68, -22, 22, 68 }) do
+        local post = part(map, "Poste de iluminação",
+            Vector3.new(0.65, 10, 0.65), Vector3.new(x, 5, 13),
+            Color3.fromRGB(77, 88, 100))
+        post.CanCollide = false
+        local lamp = part(map, "Luminária",
+            Vector3.new(3.3, 0.8, 1.6), Vector3.new(x, 10.3, 13),
+            Color3.fromRGB(245, 219, 143))
+        lamp.Material = Enum.Material.Neon
+        lamp.CanCollide = false
     end
     for _, side in ipairs({ -1, 1 }) do
         part(map, "Calçada", Vector3.new(210, 0.4, 8), Vector3.new(0, 0.15, side * 18), Color3.fromRGB(201, 204, 199))
@@ -147,6 +195,14 @@ local function makeMap()
             part(model, "Fachada E", Vector3.new(11, 9, 1), Vector3.new(x - 10, 4.5, frontZ), Color3.fromRGB(107, 161, 191))
             part(model, "Fachada D", Vector3.new(11, 9, 1), Vector3.new(x + 10, 4.5, frontZ), Color3.fromRGB(107, 161, 191))
             part(model, "Marquise", Vector3.new(31, 1, 4), Vector3.new(x, 9.3, frontZ), Color3.fromRGB(42, 117, 172))
+            part(model, "Balcão caixa", Vector3.new(4.5, 2.1, 2.4),
+                Vector3.new(x + 10.5, 1.3, frontZ + side * 4.7),
+                Color3.fromRGB(164, 119, 74))
+            local register = part(model, "Caixa registradora",
+                Vector3.new(2.5, 0.65, 1.6),
+                Vector3.new(x + 10.5, 2.7, frontZ + side * 4.7),
+                Color3.fromRGB(46, 59, 73))
+            register.CanCollide = false
             local door = part(model, "Alugue aqui", Vector3.new(4, 0.3, 4), Vector3.new(x, 0.3, frontZ - side * 3), Color3.fromRGB(255, 201, 79))
             door.CanCollide = false
             local prompt = Instance.new("ProximityPrompt")
