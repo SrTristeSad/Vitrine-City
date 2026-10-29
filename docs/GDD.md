@@ -37,6 +37,13 @@ Alugar ponto -> comprar estoque -> colocar na prateleira -> definir preço -> ob
 - Com pelo menos dois participantes e após período de entrada, se só uma empresa sobreviver a rodada termina. Limite de tempo aplica critério de sobrevivência e patrimônio.
 - Este modo já tem regra básica, mas falta balanceamento e teste com múltiplos clientes.
 
+## Eventos econômicos — v0.6
+- Notícias periódicas alteram chance de demanda e volume de remessas no competitivo, não o estoque dos jogadores.
+- Cinco eventos iniciais: dia comum, leite em falta, festival da moda, safra abundante e manhã na padaria.
+- Placa urbana de notícias e painel informam o mercado; mercadorias exibidas individualmente nas prateleiras e sacola aparece apenas após compra real.
+- Recriação desnecessária do painel de inventário foi reduzida para melhorar dispositivos móveis.
+- Ver `docs/EVENTOS_MERCADO.md`.
+
 ## Clientes e economia
 - Há 240 moradores como dados (configurável), cada um com profissão, renda, tamanho de família e carteira.
 - Cada cliente recebe uma necessidade, categoria, marca preferida e tolerância a preço.
