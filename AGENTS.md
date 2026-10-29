@@ -11,15 +11,17 @@ Jogo Roblox **original** em Luau. Uma rua comercial multiplayer com locação de
 5. A Guerra de Preços elimina jogadores por falência; não vender vantagens com Robux nas partidas competitivas.
 6. Simulação, contratos e partidas ficam isolados por servidor. Não usar DataStore como estado de transação em tempo real.
 7. Não declarar testes no Studio se não foram executados.
+8. Rua Livre salva via ProfileStore e `UpdateAsync` com lease e autosave; não ligar StudioPersistence para jogos publicados.
+9. Não sobrescrever dados reais em falha de carregamento nem misturar dados competitivos com perfis persistidos.
 
 ## Estrutura
-- \`src/ReplicatedStorage/Shared\`: Config, Catalog, Economy, Population.
-- \`src/ServerScriptService\`: servidor e mundo.
-- \`src/StarterPlayer/StarterPlayerScripts\`: cliente HUD.
-- \`docs\`: GDD, economia, monetização, testes.
+- `src/ReplicatedStorage/Shared`: Config, Catalog, Economy, Population.
+- `src/ServerScriptService`: servidor e mundo.
+- `src/StarterPlayer/StarterPlayerScripts`: cliente HUD.
+- `docs`: GDD, economia, monetização, testes.
 
 ## Próximo trabalho
-Prioridade: instalar Rojo, compilar e executar no Roblox Studio; corrigir os erros reais do Output; depois persistência para o modo normal, reconexão, matchmaking e teleporte para Places distintos. Não adicionar seis modos superficiais antes de estabilizar o principal.
+Prioridade: executar e testar no Roblox Studio; corrigir erros reais do Output; validar DataStore em ambiente de teste publicado e só então criar lobby, matchmaking e teleporte para Places distintos. Persistência da Rua Livre já implementada, mas ainda sem playtest em produção. Não adicionar seis modos superficiais antes de estabilizar o principal.
 
 ## Padrão de entrega
-Em cada alteração: resumo do comportamento, arquivos alterados, testes efetivamente rodados e limitações. Proteger eventos remotos contra dados falsificados e compras duplicadas. Documentar qualquer mudança de configuração econômica em \`docs/ECONOMIA.md\`.
+Em cada alteração: resumo do comportamento, arquivos alterados, testes efetivamente rodados e limitações. Proteger eventos remotos contra dados falsificados e compras duplicadas. Documentar qualquer mudança de configuração econômica em `docs/ECONOMIA.md`.
